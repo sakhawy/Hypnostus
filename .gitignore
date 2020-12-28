@@ -1,3 +1,7 @@
 backend/venv/
 backend/conf/conf/__pycache__/
-backend/conf/sotry/__pycache__/
+backend/conf/story/__pycache__/
+backend/conf/story/migrations/__pycache__/
+backend/conf/db.sqlite3
+.vscode/
+
