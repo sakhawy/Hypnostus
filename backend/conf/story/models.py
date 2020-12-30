@@ -17,26 +17,28 @@ class Story(MPTTModel):
     {self_id: value, child_1_id: value, child_2_id: value ... }
     GOAL: Least possible db queries.
     """
+    # TODO: Update when delete (somehow i forgot to add that :))
     @staticmethod
     def get_nth_path(story, n):
         """
         The way I see this right now is to make a dict of descendants then go in a chain
         of finding the next max childnode after getting the first nth best immediate child. 
         """
-        children_values = json.loads(story.children_values)
+        children_values = Story.to_obj(story.children_values)
         descendants = {key.id: key for key in story.get_descendants()}  # descendants dict 
         path = {}
-        nth_id = int(list(json.loads(story.children_values).items())[n][0])
+        if story.children_values:   # when no children
+            nth_id = int(list(Story.to_obj(story.children_values).items())[n][0])
 
-        # so instead of quering if the story is a leaf node or not,
-        # the children_value field has the ids of the children from which we can detect a leaf node
-        path[nth_id] = descendants[nth_id]
-        current_story = path[nth_id]
-        while len(Story.to_obj(current_story.children_values)) > 0: 
-            next_id = int(list(json.loads(current_story.children_values).items())[0][0]) # get id from value field
-            stry = descendants[next_id]    # get story from descendants
-            path[next_id] = stry   # insert it to path
-            current_story = stry
+            # so instead of quering if the story is a leaf node or not,
+            # the children_value field has the ids of the children from which we can detect a leaf node
+            path[nth_id] = descendants[nth_id]
+            current_story = path[nth_id]
+            while len(Story.to_obj(current_story.children_values)) > 0: 
+                next_id = int(list(Story.to_obj(current_story.children_values).items())[0][0]) # get id from value field
+                stry = descendants[next_id]    # get story from descendants
+                path[next_id] = stry   # insert it to path
+                current_story = stry
 
         return path
 
@@ -125,30 +127,85 @@ class Story(MPTTModel):
             super().save(*args, **kwargs)
 
 class Vote(models.Model):
+
+    @staticmethod
+    def get_if_exist(user, story):
+        "Get the vote instance if it exist in the user's vote set"
+        for vote in user.vote_set.all():
+            # find an occupied vote
+            if vote.upvoted_story == story or vote.downvoted_story == story:
+                return vote
+        
+        # find a none vote if no occupied   (this leaves no vote untaken)
+        if vote.upvoted_story == vote.downvoted_story:
+            return vote
+        
+        return None
+
+    @staticmethod
+    def upvote(vote, story):
+        vote.downvoted_story = None
+        vote.upvoted_story = story
+        vote.save()
+        # update
+        Story.vote(story)
+
+    @staticmethod
+    def downvote(vote, story):
+        vote.upvoted_story = None
+        vote.downvoted_story = story
+        vote.save()
+        Story.vote(story)
+    
+    @staticmethod
+    def unvote(vote, story):
+        vote.upvoted_story = None
+        vote.downvoted_story = None
+        vote.save()
+        Story.vote(story)
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     upvoted_story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name="upvotes", blank=True, null=True)
     downvoted_story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name="downvotes", blank=True, null=True)
 
+    def save(self, *args, **kwargs):        
+        # add exception handling for cloned stories bruh. (to ensure using upvote, downvote and unvote functions)
+        # can't save with upvoted_story & downvoted_story filled
+        print(f"UPVOTED : {self.upvoted_story}, DOWNVOTED : {self.downvoted_story}")
+        if self.upvoted_story and self.downvoted_story:
+            raise Exception("Vote Already Exists (upvoted/downvoted)") 
+
+        for vote in self.user.vote_set.all():
+            if vote.id != self.id:  # save is called to update too, so check if the stories are different first
+                # can't save if upvoted_story is in user's votes
+                if self.upvoted_story == vote.upvoted_story and (self.upvoted_story != None):
+                    raise Exception("Vote Already Exists: Can't upvote because user alreay upvoted this story")
+                if self.upvoted_story == vote.downvoted_story and (self.upvoted_story != None):
+                    raise Exception("Vote Already Exists: Can't upvote because user alreay downvoted this story")
+                
+                # cant save if downvoted_stroy is in user's votes      
+                if self.downvoted_story == vote.upvoted_story and (self.downvoted_story != None):
+                    raise Exception("Vote Already Exists: Can't downvote because user alreay upvoted this story")
+                if self.downvoted_story == vote.downvoted_story and (self.downvoted_story != None):
+                    raise Exception("Vote Already Exists: Can't downvote because user alreay downvoted this story")
+            
+                # prevent user from creating new empty votes
+                if self.upvoted_story == vote.upvoted_story and self.downvoted_story == vote.downvoted_story:   # the only case for this is None, None
+                    raise Exception("Can't Create New Empty Votes: This user already has an unoccupied vote to be used.")
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         if self.upvoted_story:
-            return f"{self.upvoted_story.name} #{self.id}"
-        return f"{self.downvoted_story.name} #{self.id}"
-    
+            return f"#{self.id} For {self.upvoted_story.name}"
+        elif self.downvoted_story:
+            return f"#{self.id} For {self.downvoted_story.name}"
+        else:
+            return f"#{self.id}"
     def __repr__(self):
         if self.upvoted_story:
-            return f"{self.upvoted_story.name} #{self.id}"
-        return f"{self.downvoted_story.name} #{self.id}"
-    
-    def upvote(self, story):
-        if self.downvoted_story:
-            self.downvoted_story = None
-        self.upvoted_story = story
-        self.save()
-        Story.vote(story)
-
-    def downvote(self, story):
-        if self.upvoted_story:
-            self.upvoted_story = None
-        self.downvoted_story = story
-        self.save()
-        Story.vote(story)
+            return f"#{self.id} For {self.upvoted_story.name}"
+        elif self.downvoted_story:
+            return f"#{self.id} For {self.downvoted_story.name}"
+        else:
+            return f"#{self.id}"
