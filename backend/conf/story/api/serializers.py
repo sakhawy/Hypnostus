@@ -28,6 +28,7 @@ class StorySerializer(serializers.ModelSerializer):
         fields = ["id", "name", "content", "parent", "user", "upvotes", "downvotes"]
 
 class VoteSerializer(serializers.ModelSerializer):
+    # TODO: fix the clusterfuck of a model i built here ==> ( id, user, story, value )
     class Meta:
         model = models.Vote
         fields = ["id", "user", "upvoted_story", "downvoted_story"]

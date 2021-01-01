@@ -4,5 +4,20 @@ backend/conf/story/__pycache__/
 backend/conf/story/migrations/__pycache__/
 backend/conf/story/api/__pycache__/
 backend/conf/db.sqlite3
+frontend/node_modules/
+frontend/hypnostus-frontend/.eslintcache
+frontend/hypnostus-frontend/node_modules
+frontend/hypnostus-frontend/.pnp
+frontend/hypnostus-frontend/.pnp.js
+frontend/hypnostus-frontend/coverage
+frontend/hypnostus-frontend/build
+frontend/hypnostus-frontend/.DS_Store
+frontend/hypnostus-frontend/.env.local
+frontend/hypnostus-frontend/.env.development.local
+frontend/hypnostus-frontend/.env.test.local
+frontend/hypnostus-frontend/.env.production.local
+frontend/hypnostus-frontend/npm-debug.log*
+frontend/hypnostus-frontend/yarn-debug.log*
+frontend/hypnostus-frontend/yarn-error.log*
 .vscode/
 

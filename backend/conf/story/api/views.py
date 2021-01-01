@@ -54,42 +54,71 @@ def get_root_stories_view(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_nth_best_branch(request):
+    data = request.GET
+    print(data)
     try:
-        story = models.Story.objects.get(id = request.data["story"])
+        story = models.Story.objects.get(id = int(data["id"]))
     except:
         return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
     
-    branch = models.Story.get_nth_path(story, int(request.data["rank"]))
+    branch = models.Story.get_nth_path(story, int(data["rank"]))
+    print(branch)
     serializer = serializers.StorySerializer(branch.values(), many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(
+        {
+            "branch": serializer.data,
+            "id": story.id,
+            "rank": data["rank"]
+        }, status=status.HTTP_200_OK)
 
-@api_view(["POST"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def vote_view(request):
-    try:
-        story = models.Story.objects.get(id=request.data["id"])
-    except:
-        return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if request.method == "GET":
+        votes = models.Vote.objects.filter(user=request.user)
+        
+        # a fix for the shitty vote model ==> {story_id: value}
+        res_data = {}
+        for vote in votes:
+            if vote.upvoted_story:
+                res_data[vote.upvoted_story.id] = 1
+            elif vote.downvoted_story:
+                res_data[vote.downvoted_story.id] = -1
+        
+        return Response(res_data, status=status.HTTP_200_OK)
 
-    # vote
-    user = request.user
-    vote = models.Vote.get_if_exist(user=user, story=story)
-    if vote == None:
-        # creating serializer to catch errors using is_valid
-        data = {"user": request.user.id}
-        serializer = serializers.VoteSerializer(data=data)
-        if serializer.is_valid():
-            vote = serializer.save()
+
+    if request.method == 'POST':
+        try:
+            story = models.Story.objects.get(id=request.data["id"])
+        except:
+            return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # vote
+        user = request.user
+        vote = models.Vote.get_if_exist(user=user, story=story)
+        if vote == None:
+            # creating serializer to catch errors using is_valid
+            data = {"user": request.user.id}
+            serializer = serializers.VoteSerializer(data=data)
+            if serializer.is_valid():
+                vote = serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        actions = {"1": models.Vote.upvote, "-1": models.Vote.downvote, "0": models.Vote.unvote}
+        action = actions[str(request.data["value"])]
+        action(vote, story)
+
+        res_data = {}
+        if vote.upvoted_story:
+            res_data[vote.upvoted_story.id] = 1
+        elif vote.downvoted_story:
+            res_data[vote.downvoted_story.id] = -1
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    actions = {"1": models.Vote.upvote, "-1": models.Vote.downvote, "0": models.Vote.unvote}
-    action = actions[request.data["value"]]
-    action(vote, story)
-
-    # create serializer then return
-    serializer = serializers.VoteSerializer(vote)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+            res_data[story.id] = 0  
+        return Response(res_data, status=status.HTTP_200_OK)
 
 @api_view(["POST"])
 def user_login_view(request):

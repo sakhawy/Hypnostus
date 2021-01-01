@@ -17,7 +17,8 @@ class Story(MPTTModel):
     {self_id: value, child_1_id: value, child_2_id: value ... }
     GOAL: Least possible db queries.
     """
-    # TODO: Update when delete (somehow i forgot to add that :))
+    # TODO: Update children_values when delete (somehow i forgot to add that :))
+    # TODO: When 2 branches have the save values, chose the one with the most nodes
     @staticmethod
     def get_nth_path(story, n):
         """
@@ -127,7 +128,9 @@ class Story(MPTTModel):
             super().save(*args, **kwargs)
 
 class Vote(models.Model):
-
+    # NOTE: i donno wtf i was on but this model should've been smn like:
+    # user => foriegnkey(user), story => foriegnkey(story), value => intchoice([1, 0, -1])
+    # i need to take a break from ketamine
     @staticmethod
     def get_if_exist(user, story):
         "Get the vote instance if it exist in the user's vote set"
@@ -136,9 +139,10 @@ class Vote(models.Model):
             if vote.upvoted_story == story or vote.downvoted_story == story:
                 return vote
         
-        # find a none vote if no occupied   (this leaves no vote untaken)
-        if vote.upvoted_story == vote.downvoted_story:
-            return vote
+        for vote in user.vote_set.all():
+            # find a none vote if no occupied   (this leaves no vote untaken)
+            if vote.upvoted_story == vote.downvoted_story:
+                return vote
         
         return None
 
