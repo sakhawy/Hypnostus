@@ -24,13 +24,13 @@ export const load_stories = () => async (dispatch, getState) => {
     }
 }
 
-export const create_story = (name, content, parentId) => async (dispatch, getState) => {
+export const create_story = (title, content, parentId) => async (dispatch, getState) => {
     // call api 
     const response = await callApi({
         method: "POST",
         endpoint: "story/",
         data: {
-            name: name,
+            title: title,
             content: content,
             parent: parentId
         }
@@ -46,7 +46,7 @@ export const create_story = (name, content, parentId) => async (dispatch, getSta
     }
 }
 
-export const update_story = (storyId, name, content, parentId) => async (dispatch, getState) => {
+export const update_story = (storyId, title, content, parentId) => async (dispatch, getState) => {
     // call api 
     const response = await callApi({
         method: "PUT",
@@ -54,7 +54,7 @@ export const update_story = (storyId, name, content, parentId) => async (dispatc
         data:
         {   
             id: storyId,
-            name: name,
+            title: title,
             content: content,
             parent: parentId
         }
@@ -85,29 +85,6 @@ export const delete_story = (storyId) => async (dispatch, getState) => {
     if (response){
         dispatch({
             type: STORY_DELETED,
-            payload: {
-                ...response
-            }
-        })
-    }
-}
-
-export const vote_story = (storyId, value) => async (dispatch, getState) => {
-    // call api 
-    const response = await callApi({
-        method: "POST",
-        endpoint: "story/vote/",
-        data:
-        {   
-            id: storyId,
-            value: value
-        }
-
-    }) (dispatch, getState)
-    // dispatch  
-    if (response){
-        dispatch({
-            type: STORY_UPDATED,
             payload: {
                 ...response
             }

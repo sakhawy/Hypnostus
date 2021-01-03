@@ -1,42 +1,50 @@
 import logo from './logo.svg';
 import './App.css';
-import store from "./store/config"
-import { create_story, delete_story, load_stories, update_story, vote_story } from './store/actions/stories';
-import { load_branches } from './store/actions/branches';
-import { register, login } from './store/actions/user';
-import { vote } from './store/actions/votes';
+import React from "react"
+import { connect } from 'react-redux';
+import {BrowserRouter as Router, Route, Switch} from "react-router-dom"
+import Navbar from "./components/navbar"
+import Login from "./components/login"
+import Register from "./components/register"
+import { login } from './store/actions/user';
+import Logout from './components/logout';
+import Dashboard from './components/dashboard';
+import StoryBranch from './components/storyBranch';
+import { load_user_votes } from "./store/actions/votes"
 
-const f = async () => {
-  await store.dispatch(login("username", "password" ))
-  await store.dispatch(vote(41, -1))
-  // await store.dispatch(load_stories())
-  // await store.dispatch(vote_story(41, 1))
-  // await store.dispatch(load_stories())
+class App extends React.Component {
+  componentWillMount(){
+    // load local storage
+    this.props.login()
+
+    // other stuff that shouldn't be done often
+    this.props.loadVotes()
+
+  }
+
+  render (){
+    return (
+      <Router>
+        <Navbar />
+        <Route path="/login" component={Login}/>
+        <Route path="/signup" component={Register}/>
+        <Route path="/logout" component={Logout}/>
+        <Route path="/dashboard" render={props => 
+          <Dashboard />
+        }/>
+        <Route path="/story" component={StoryBranch} />
+      </Router>
+    );
+  }
 }
-f()
-// store.dispatch(load_branches(41, 0))
-// store.dispatch(update_story(49, "jsjklajdfkl", "sdfsdfsdf"))
-// store.dispatch(create_story("test", "test", null))
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const mapStateToProps = (state) => ({
+})
 
-export default App;
+const mapDispatchToProps = (dispatch) => ({
+  login: async () => {await dispatch(login())},
+  loadVotes : () => {dispatch(load_user_votes())}
+
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(App);

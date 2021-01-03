@@ -3,15 +3,15 @@ import { callApi } from "./api";
 export const BRANCH_ADDED = "BRANCH_ADDED";
 
 
-export const load_branches = (storyId, rank) => async (dispatch, getState) => {
+export const load_branch = (data) => async (dispatch, getState) => {
     // call api 
     const response = await callApi({
         method: "GET",
         endpoint: "story/branch/",
         params:
         {
-            id: storyId,
-            rank: rank
+            id: data.id,
+            rank: data.rank
         }
     }) (dispatch, getState)
     // dispatch  

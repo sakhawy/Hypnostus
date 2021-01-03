@@ -16,6 +16,10 @@ class UserSerializer(serializers.ModelSerializer):
 class StorySerializer(serializers.ModelSerializer):
     upvotes = serializers.SerializerMethodField("get_upvotes")
     downvotes = serializers.SerializerMethodField("get_downvotes")
+    username = serializers.SerializerMethodField("get_username")
+
+    def get_username(self, story):
+        return story.user.username
 
     def get_upvotes(self, story):
         return len(story.upvotes.all())
@@ -25,7 +29,7 @@ class StorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Story
-        fields = ["id", "name", "content", "parent", "user", "upvotes", "downvotes"]
+        fields = ["id", "title", "content", "parent", "user", "upvotes", "downvotes", "username"]
 
 class VoteSerializer(serializers.ModelSerializer):
     # TODO: fix the clusterfuck of a model i built here ==> ( id, user, story, value )

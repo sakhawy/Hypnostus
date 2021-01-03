@@ -55,14 +55,12 @@ def get_root_stories_view(request):
 @permission_classes([IsAuthenticated])
 def get_nth_best_branch(request):
     data = request.GET
-    print(data)
     try:
         story = models.Story.objects.get(id = int(data["id"]))
     except:
         return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
     
     branch = models.Story.get_nth_path(story, int(data["rank"]))
-    print(branch)
     serializer = serializers.StorySerializer(branch.values(), many=True)
     return Response(
         {

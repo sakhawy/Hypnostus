@@ -105,18 +105,18 @@ class Story(MPTTModel):
             parent.children_values = Story.added_value(parent.children_values, story.id, 0) # add child to parent's children_values field
             parent.save()
 
-    name = models.CharField(max_length=500, blank=True, null=True)
-    content = models.CharField(max_length=100000)
+    title = models.CharField(max_length=500, blank=True, null=True)
+    content = models.TextField()
     parent = TreeForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name="children")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     children_values = models.JSONField(blank=True, null=True)
     value = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name} #{self.id}"
+        return f"{self.title} #{self.id}"
 
     def __repr__(self):
-        return self.name
+        return self.title
 
     def save(self, *args, **kwargs):
         # ok, this took me some time
@@ -201,15 +201,15 @@ class Vote(models.Model):
 
     def __str__(self):
         if self.upvoted_story:
-            return f"#{self.id} For {self.upvoted_story.name}"
+            return f"#{self.id} For {self.upvoted_story.title}"
         elif self.downvoted_story:
-            return f"#{self.id} For {self.downvoted_story.name}"
+            return f"#{self.id} For {self.downvoted_story.title}"
         else:
             return f"#{self.id}"
     def __repr__(self):
         if self.upvoted_story:
-            return f"#{self.id} For {self.upvoted_story.name}"
+            return f"#{self.id} For {self.upvoted_story.title}"
         elif self.downvoted_story:
-            return f"#{self.id} For {self.downvoted_story.name}"
+            return f"#{self.id} For {self.downvoted_story.title}"
         else:
             return f"#{self.id}"

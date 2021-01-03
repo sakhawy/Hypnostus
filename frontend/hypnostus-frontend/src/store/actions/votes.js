@@ -4,20 +4,19 @@ export const VOTE_ADDED = "VOTE_ADDED"
 export const VOTES_LOADED = "VOTES_LOADED"
 export const VOTE_DELETED = "VOTE_DELETED"
 
-export const vote = (storyId, value) => async (dispatch, getState) => {
+export const vote = (data) => async (dispatch, getState) => {
     // call api 
     const response = await callApi({
         method: "POST",
         endpoint: "story/vote/",
         data: {
-            id: storyId,
-            value: value
+            id: data.storyId,
+            value: data.value
         }
     }) (dispatch, getState)
     // dispatch  
-    console.log(response)
     if (response) {
-        if (response[storyId] !== 0){
+        if (response[data.storyId] !== 0){
             dispatch({
                 type: VOTE_ADDED,
                 payload: {
@@ -35,3 +34,20 @@ export const vote = (storyId, value) => async (dispatch, getState) => {
         }
     }
 }
+
+export const load_user_votes = () => async (dispatch, getState) => {
+        // call api 
+        const response = await callApi({
+            method: "GET",
+            endpoint: "story/vote/",
+        }) (dispatch, getState)
+        // dispatch  
+        if (response) {
+            dispatch({
+                type: VOTE_ADDED,
+                payload: {
+                    ...response
+                }
+            })
+        }
+    }
