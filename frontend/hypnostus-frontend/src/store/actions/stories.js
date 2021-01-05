@@ -5,8 +5,6 @@ export const STORY_CREATED = "STORY_CREATED";
 export const STORY_UPDATED = "STORY_UPDATED";
 export const STORY_DELETED = "STORY_DELETED";
 
-// TODO: handle authentication 
-
 export const load_stories = () => async (dispatch, getState) => {
     // call api 
     const response = await callApi({
@@ -19,74 +17,6 @@ export const load_stories = () => async (dispatch, getState) => {
             type: STORIES_LOADED,
             payload: {
                 stories: [...response]
-            }
-        })
-    }
-}
-
-export const create_story = (title, content, parentId) => async (dispatch, getState) => {
-    // call api 
-    const response = await callApi({
-        method: "POST",
-        endpoint: "story/",
-        data: {
-            title: title,
-            content: content,
-            parent: parentId
-        }
-    }) (dispatch, getState)
-    // dispatch  
-    if (response){
-        dispatch({
-            type: STORY_CREATED,
-            payload: {
-                ...response
-            }
-        })
-    }
-}
-
-export const update_story = (storyId, title, content, parentId) => async (dispatch, getState) => {
-    // call api 
-    const response = await callApi({
-        method: "PUT",
-        endpoint: "story/",
-        data:
-        {   
-            id: storyId,
-            title: title,
-            content: content,
-            parent: parentId
-        }
-    }) (dispatch, getState)
-    // dispatch  
-    if (response){
-        dispatch({
-            type: STORY_UPDATED,
-            payload: {
-                ...response
-            }
-        })
-    }
-}
-
-
-export const delete_story = (storyId) => async (dispatch, getState) => {
-    // call api 
-    const response = await callApi({
-        method: "DELETE",
-        endpoint: "story/",
-        data:
-        {   
-            id: storyId,
-        }
-    }) (dispatch, getState)
-    // dispatch  
-    if (response){
-        dispatch({
-            type: STORY_DELETED,
-            payload: {
-                ...response
             }
         })
     }

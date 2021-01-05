@@ -25,10 +25,6 @@ class BranchFooter extends React.Component {
     componentDidMount(){
     }
 
-    componentDidUpdate(){
-        console.log(this.props.stories)
-    }
-
     render() {
         const classes = this.props.classes
         return (
@@ -38,7 +34,7 @@ class BranchFooter extends React.Component {
                 >
                 <Grid
                     item
-                    xs={3}
+                    xs={2}
                     align="center"
                     >
                     <Button
@@ -50,18 +46,41 @@ class BranchFooter extends React.Component {
                 </Grid>
                 <Grid
                     item
-                    xs={6}
+                    xs={3}
                     align="center"
                     >
                     <Button
                         size="large"
+                        onClick={() => this.props.handleAlternate(1)}
                         >
-                        Alternate
+                        Downternate
+                    </Button>
+                </Grid>
+                <Grid 
+                    item
+                    xs={2}
+                    >
+                    <Button
+                        size="large"
+                        onClick={() => this.props.handleCreate()}
+                        >
+                        Create
+                    </Button>
+                </Grid>
+                <Grid 
+                    item
+                    xs={3}
+                    >
+                    <Button
+                        size="large"
+                        onClick={() => this.props.handleAlternate(-1)}
+                        >
+                        Upternate
                     </Button>
                 </Grid>
                 <Grid
                     item
-                    xs={3}
+                    xs={2}
                     align="center"
                     >
                     <Button

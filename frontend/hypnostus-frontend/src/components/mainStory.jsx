@@ -44,7 +44,7 @@ class MainStory extends React.Component{
                             underline="none"
                             variant="h4"
                             noWrap
-                            to={`/story/?${queryString.stringify({id: this.props.id, rank: 0})}`}
+                            to={`/story/?${queryString.stringify({id: this.props.id, n: 0})}`}
                             >
                             {this.props.title}
                             

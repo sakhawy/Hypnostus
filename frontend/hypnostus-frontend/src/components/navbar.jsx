@@ -43,8 +43,11 @@ class Navbar extends React.Component{
                 {this.props.user.token &&
                 <Toolbar>
                     <Grid container spacing={3}>
-                        <Grid item xs={10}>
-                            <Typography component="h1" variant="h3">Dashboard</Typography>
+                        <Grid item xs={4}>
+                            <Typography component={Link} to="/dashboard" color="inherit"  variant="h3">Dashboard</Typography>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Button component={Link} to="/story/create" variant="outlined">Create</Button>
                         </Grid>
                         <Grid item xs={2}>
                             <Button component={ Link } to="/logout" color="default" variant="outlined" fullWidth> Logout </Button>

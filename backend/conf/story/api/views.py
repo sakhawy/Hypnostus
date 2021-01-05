@@ -12,9 +12,20 @@ from story import models
 @permission_classes([IsAuthenticated])
 def get_root_stories_view(request):
     if request.method == "GET":
-        all_stories = models.Story.objects.filter(parent=None)
-        serializer = serializers.StorySerializer(all_stories, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = request.GET
+        if not data.get("id", 0):
+            all_stories = models.Story.objects.filter(parent=None)
+            serializer = serializers.StorySerializer(all_stories, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            try:
+                story = models.Story.objects.get(id = int(data["id"]))
+            except:
+                return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer = serializers.StorySerializer(story, context={"user": request.user})
+            serializer.data.update({"n": 0})  # default
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method == "POST":
         data = request.data.copy()
@@ -68,6 +79,45 @@ def get_nth_best_branch(request):
             "id": story.id,
             "rank": data["rank"]
         }, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_parent(request):
+    data = request.GET
+    try:
+        story = models.Story.objects.get(id = int(data["id"]))
+    except:
+        return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        parent = story.get_ancestors(ascending=True)[0]
+    except:
+        return Response({"error": "Story's Parent Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+        
+    serializer = serializers.StorySerializer(parent, context={"user": request.user})
+    
+    # res_data = serializer.data.copy()
+    # res_data.update({"n": 0})
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_nth_child(request):
+    data = request.GET
+    try:
+        story = models.Story.objects.get(id = int(data["id"]))
+    except:
+        return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        nth_child = models.Story.get_nth_child(story, int(data["n"]))
+        serializer = serializers.StorySerializer(nth_child, context={"user": request.user})
+        res_data = serializer.data.copy()
+        res_data.update({"n": data["n"]})
+        return Response(res_data, status=status.HTTP_200_OK)
+    except:
+        return Response({"error": "Can't Get Child"}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])

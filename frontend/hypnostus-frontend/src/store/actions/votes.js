@@ -1,4 +1,5 @@
 import { callApi } from "./api"
+import { load_current_in_branch } from "./branches"
 
 export const VOTE_ADDED = "VOTE_ADDED"
 export const VOTES_LOADED = "VOTES_LOADED"
@@ -16,22 +17,8 @@ export const vote = (data) => async (dispatch, getState) => {
     }) (dispatch, getState)
     // dispatch  
     if (response) {
-        if (response[data.storyId] !== 0){
-            dispatch({
-                type: VOTE_ADDED,
-                payload: {
-                    ...response
-                }
-            })
-        }
-        else {
-            dispatch({
-                type: VOTE_DELETED,
-                payload: {
-                    ...response
-                }
-            })
-        }
+        // reload branch [ease of calculations]
+        dispatch(load_current_in_branch(data.storyId))
     }
 }
 

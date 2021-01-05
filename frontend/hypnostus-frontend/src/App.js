@@ -10,15 +10,14 @@ import { login } from './store/actions/user';
 import Logout from './components/logout';
 import Dashboard from './components/dashboard';
 import StoryBranch from './components/storyBranch';
-import { load_user_votes } from "./store/actions/votes"
+import StoryCreator from './components/storyCreator';
+import AuthRoute from './components/authRoute';
 
 class App extends React.Component {
   componentWillMount(){
     // load local storage
     this.props.login()
 
-    // other stuff that shouldn't be done often
-    this.props.loadVotes()
 
   }
 
@@ -26,13 +25,15 @@ class App extends React.Component {
     return (
       <Router>
         <Navbar />
-        <Route path="/login" component={Login}/>
-        <Route path="/signup" component={Register}/>
-        <Route path="/logout" component={Logout}/>
-        <Route path="/dashboard" render={props => 
-          <Dashboard />
-        }/>
-        <Route path="/story" component={StoryBranch} />
+        <Switch>
+          <Route path="/login" component={Login}/>
+          <Route path="/signup" component={Register}/>
+          <Route path="/logout" component={Logout}/>
+          <AuthRoute path="/story/create" component={StoryCreator} />
+          <AuthRoute path="/story" component={StoryBranch} />
+          <AuthRoute path="/dashboard" component={ Dashboard }/>
+          <AuthRoute exact path="/" component={Dashboard} />
+        </Switch>
       </Router>
     );
   }
@@ -43,7 +44,6 @@ const mapStateToProps = (state) => ({
 
 const mapDispatchToProps = (dispatch) => ({
   login: async () => {await dispatch(login())},
-  loadVotes : () => {dispatch(load_user_votes())}
 
 })
 

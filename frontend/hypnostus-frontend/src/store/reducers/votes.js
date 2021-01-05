@@ -1,16 +1,17 @@
-import { vote_story } from "../actions/stories";
-import { VOTE_ADDED, VOTES_LOADED } from "../actions/votes"
-// making a state for votes cause it will complicate matters if i were to put it in stories
-const vote_reducer = (votes = {}, action) => {
+import { VOTES_LOADED, VOTE_ADDED, VOTE_DELETED } from "../actions/votes"
+
+export const vote_reducer = (votes = [], action) => {
     switch (action.type) {
         case VOTES_LOADED:
-            return {...action.payload}
-
+            return [...action.payload]            
+    
         case VOTE_ADDED:
-            return {...votes, ...action.payload}
+            return [...votes, {...action.payload}]
+
+        case VOTE_DELETED:
+            return votes.filter(vote => Object.keys(vote)[0] !== action.payload.id)
 
         default:
-            return votes;
+            return votes
     }
 }
-export default vote_reducer

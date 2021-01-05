@@ -1,25 +1,13 @@
-import { BRANCH_ADDED } from "../actions/branches";
+import { BRANCH_ADDED, BRANCH_POPPED, BRANCH_DELETED } from "../actions/branches";
 
-const initialState = {
-    // storyId : {
-    //     rank : [...content]
-    // }
-}
-
-const branches_reducer = (branches = initialState, action) => {
+const branch_reducer = (branch={}, action) => {
     switch (action.type) {
         case BRANCH_ADDED:
-            return ({
-                ...branches,  // spread branch content
-                [action.payload.id]:
-                    {
-                        ...branches[action.payload.id],  // get the content [for if the story has other branches] 
-                        [action.payload.rank]: [...action.payload.branch]    // add the new branch 
-                    }
-            })
+            return {...action.payload}
+            
         default:
-            return branches
+            return branch
     }
 }
 
-export default branches_reducer
+export default branch_reducer

@@ -20,6 +20,22 @@ class Story(MPTTModel):
     # TODO: Update children_values when delete (somehow i forgot to add that :))
     # TODO: When 2 branches have the save values, chose the one with the most nodes
     @staticmethod
+    def get_nth_child(story, n):
+        """
+        Trying this different design where I only have to get the next best child.
+        Return the id of the nth best child.
+        This design will be temporal till i implement a websocket functionality.
+        My initial goal was to move the computational burden from the server to the client
+        by sending whole branches at once instead of getting fucked by a million client request.  
+        """
+        children = Story.to_obj(story.children_values)
+        try:
+            return Story.objects.get(id=list(children.keys())[n])
+
+        except:
+            raise Exception("Can't Get Child")
+    
+    @staticmethod
     def get_nth_path(story, n):
         """
         The way I see this right now is to make a dict of descendants then go in a chain
@@ -127,6 +143,17 @@ class Story(MPTTModel):
         else:
             super().save(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        # FIXME: I think this is bad. signals are better, fix later
+        parents = self.get_ancestors(ascending=True)
+        if parents:
+            parent = parents[0]
+            children = Story.to_obj(parent.children_values)
+            children.pop(str(self.id), None)
+            parent.children_values = json.dumps(children)
+            parent.save()
+        super().delete(*args, **kwargs)
+
 class Vote(models.Model):
     # NOTE: i donno wtf i was on but this model should've been smn like:
     # user => foriegnkey(user), story => foriegnkey(story), value => intchoice([1, 0, -1])
@@ -175,7 +202,6 @@ class Vote(models.Model):
     def save(self, *args, **kwargs):        
         # add exception handling for cloned stories bruh. (to ensure using upvote, downvote and unvote functions)
         # can't save with upvoted_story & downvoted_story filled
-        print(f"UPVOTED : {self.upvoted_story}, DOWNVOTED : {self.downvoted_story}")
         if self.upvoted_story and self.downvoted_story:
             raise Exception("Vote Already Exists (upvoted/downvoted)") 
 

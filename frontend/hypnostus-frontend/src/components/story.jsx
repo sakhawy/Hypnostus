@@ -35,7 +35,7 @@ class Story extends React.Component{
 
     handleVote(value){
         this.props.vote({
-            storyId: this.props.story.id,
+            storyId: this.props.branch.id,
             value: value
         })
     }
@@ -73,18 +73,18 @@ class Story extends React.Component{
                                     <Button
                                         onClick={() => this.handleVote(1)}
                                         variant="outlined"
-                                        color={ this.props.user_votes[this.props.story.id] === 1 ? "secondary" : "default" }
+                                        color={ this.props.branch.user_vote === 1 ? "secondary" : "default" }
                                         >
-                                        UP
+                                        {this.props.branch.upvotes}
                                         </Button>
                                 </Grid>
                                 <Grid item>
                                     <Button
                                         onClick={() => this.handleVote(-1)}
                                         variant="outlined"
-                                        color={ this.props.user_votes[this.props.story.id] === -1 ? "secondary" : "default" }
+                                        color={ this.props.branch.user_vote === -1 ? "secondary" : "default" }
                                         >
-                                        DN
+                                        {this.props.branch.downvotes}
                                         </Button>
                                 </Grid>
                             </Grid>
@@ -97,7 +97,7 @@ class Story extends React.Component{
                                 align="center"
                                 variant="h4"
                                 >
-                                {this.props.story.title}
+                                {this.props.branch.title}
                             </Typography>
                         </Grid>
                         <Grid 
@@ -107,7 +107,7 @@ class Story extends React.Component{
                             <Typography
                                 align="center"
                                 >
-                                By: {this.props.story.username}
+                                By: {this.props.branch.username}
                             </Typography>
                         </Grid>
                     </Grid>
@@ -122,7 +122,7 @@ class Story extends React.Component{
                                 className={classes.story}
                                 // align="left"
                                 >
-                                {this.props.story.content}
+                                {this.props.branch.content}
                             </pre>
                         </Box>
                     </Grid>
@@ -133,7 +133,7 @@ class Story extends React.Component{
 }
 
 const mapStateToProps = state => ({
-    user_votes : state.user_votes
+    branch: state.branch,
 })
 
 const mapDispatchToProps = dispatch => ({
