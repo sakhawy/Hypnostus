@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import React from "react"
 import { connect } from 'react-redux';
@@ -9,9 +8,9 @@ import Register from "./components/register"
 import { login } from './store/actions/user';
 import Logout from './components/logout';
 import Dashboard from './components/dashboard';
-import StoryBranch from './components/storyBranch';
 import StoryCreator from './components/storyCreator';
 import AuthRoute from './components/authRoute';
+import StoryBrowser from './components/storyBrowser';
 
 class App extends React.Component {
   componentWillMount(){
@@ -30,7 +29,7 @@ class App extends React.Component {
           <Route path="/signup" component={Register}/>
           <Route path="/logout" component={Logout}/>
           <AuthRoute path="/story/create" component={StoryCreator} />
-          <AuthRoute path="/story" component={StoryBranch} />
+          <AuthRoute path="/story" component={StoryBrowser} />
           <AuthRoute path="/dashboard" component={ Dashboard }/>
           <AuthRoute exact path="/" component={Dashboard} />
         </Switch>

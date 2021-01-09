@@ -1,8 +1,8 @@
 import axios from "axios"
 
-const API_CALLED = "API_CALLED"
-const API_CALL_SUCCEEDED = "API_CALL_SUCCEEDED"
-const API_CALL_FAILED = "API_CALL_FAILED"
+export const API_CALLED = "API_CALLED"
+export const API_CALL_SUCCEEDED = "API_CALL_SUCCEEDED"
+export const API_CALL_FAILED = "API_CALL_FAILED"
 
 export const callApi = (call={method: null, endpoint: null, data: null, params: null}) => async (dispatch, getState) => {
     dispatch({
@@ -26,7 +26,8 @@ export const callApi = (call={method: null, endpoint: null, data: null, params: 
     }
     catch (error) {
         dispatch({
-            type: API_CALL_FAILED
+            type: API_CALL_FAILED,
+            payload: error.response
         })
         return false
     }

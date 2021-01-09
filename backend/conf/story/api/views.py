@@ -15,7 +15,7 @@ def get_root_stories_view(request):
         data = request.GET
         if not data.get("id", 0):
             all_stories = models.Story.objects.filter(parent=None)
-            serializer = serializers.StorySerializer(all_stories, many=True)
+            serializer = serializers.StorySerializer(all_stories, many=True, context={"user": request.user})
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             try:
@@ -114,7 +114,7 @@ def get_nth_child(request):
         nth_child = models.Story.get_nth_child(story, int(data["n"]))
         serializer = serializers.StorySerializer(nth_child, context={"user": request.user})
         res_data = serializer.data.copy()
-        res_data.update({"n": data["n"]})
+        # res_data.update({"n": data["n"]})
         return Response(res_data, status=status.HTTP_200_OK)
     except:
         return Response({"error": "Can't Get Child"}, status=status.HTTP_400_BAD_REQUEST)

@@ -9,12 +9,11 @@ import { Grid } from "@material-ui/core"
 import { withStyles } from "@material-ui/core/styles"
 
 const styles = {
-    root: {
-        // display: "flex"
+    nav: {
+        borderBottom: "3px solid black"
     },
-    sticky: {
-        // position: "sticky",
-        // top: "0rem"
+    button: {
+        border: "3px solid #000a12"
     }
 }
 
@@ -23,34 +22,44 @@ class Navbar extends React.Component{
     render(){
         const classes = this.props.classes
         return (
-            <AppBar position="static" color="default" className={classes.sticky}>
+            <AppBar elevation={0} position="static" color="default" className={classes.nav}>
                 {!this.props.user.token && 
-                <Toolbar>
-                    <Grid container spacing={3}>
+                <Toolbar
+                >
+                    <Grid container spacing={1}>
 
-                        <Grid item xs={8}>
-                            <Typography component="h1" variant="h3">Home</Typography>
+                        <Grid item xs={8} xm={8} xl={10}>
+                            <Typography variant="h4">Home</Typography>
                         </Grid>
-                        <Grid item xs={2}>
-                            <Button component={ Link } to="/login" color="default" variant="outlined" fullWidth>Login</Button>
+                        <Grid item xs={2} xm={2} xl={1}>
+                            <Button component={ Link } to="/login" color="default" variant="outlined" fullWidth className={classes.button}>Login</Button>
                         </Grid>
-                        <Grid item xs={2}>
-                            <Button component={ Link } to="/signup" color="default" variant="outlined" fullWidth> Signup</Button>
+                        <Grid item xs={2} xm={2} xl={1}>
+                            <Button component={ Link } to="/signup" color="default" variant="outlined" fullWidth className={classes.button}> Signup</Button>
                         </Grid>
                     </Grid>
                 </Toolbar>
                 }
                 {this.props.user.token &&
-                <Toolbar>
-                    <Grid container spacing={3}>
-                        <Grid item xs={4}>
-                            <Typography component={Link} to="/dashboard" color="inherit"  variant="h3">Dashboard</Typography>
+                <Toolbar
+
+                >
+                    <Grid container spacing={1}>
+                        <Grid item xs={10} xm={10} xl={11}>
+                            <Typography 
+                                component={Link} 
+                                to="/dashboard" 
+                                color="inherit" 
+                                variant="h4"
+                                style={{
+                                    textDecoration: "none"
+                                }}
+                            >
+                                Dashboard
+                            </Typography>
                         </Grid>
-                        <Grid item xs={6}>
-                            <Button component={Link} to="/story/create" variant="outlined">Create</Button>
-                        </Grid>
-                        <Grid item xs={2}>
-                            <Button component={ Link } to="/logout" color="default" variant="outlined" fullWidth> Logout </Button>
+                        <Grid item xs={2} xm={2} xl={1}>
+                            <Button component={ Link } to="/logout" color="default" variant="outlined" fullWidth className={classes.button}> Logout </Button>
                         </Grid>
                     </Grid>
                 </Toolbar>

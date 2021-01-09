@@ -1,21 +1,32 @@
-import { STORIES_LOADED, STORY_CREATED, STORY_DELETED, STORY_UPDATED } from "../actions/stories";
-
-const stories_reducer = (stories = [], action) => {
+import { STORIES_LOADED, STORY_CREATED, ACTIVE_STORY_LOADED, STORY_UPDATED } from "../actions/stories";
+const initialState = {
+    mainStories: [],
+    activeStory: {}
+}
+const stories_reducer = (stories=initialState, action) => {
     switch (action.type) {
         case STORIES_LOADED:
-            return [...action.payload.stories]
+            return ({
+                ...stories,
+                mainStories: action.payload
+            })
         
-        case STORY_CREATED:
-            return [...stories, action.payload]
-
-        case STORY_UPDATED:
-            return stories.map(story => {
-                return story.id === action.payload.id ? action.payload : story     
+        case ACTIVE_STORY_LOADED:
+            return ({
+                ...stories,
+                activeStory: action.payload
             })
 
-        case STORY_DELETED:
-            return stories.filter(story => {
-                return story.id !== action.payload.id 
+        case STORY_CREATED:
+            return ({
+                ...stories,
+                activeStory: action.payload
+            })
+
+        case STORY_UPDATED: // for voting
+            return ({
+                ...stories,
+                activeStory: action.payload
             })
 
         default:

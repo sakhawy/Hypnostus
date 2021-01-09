@@ -3,18 +3,74 @@ import Button from "@material-ui/core/Button";
 import Container from "@material-ui/core/Container"
 import Typography from "@material-ui/core/Typography"
 import TextField from "@material-ui/core/TextField"
-import Box from "@material-ui/core/Box"
-import {makeStyles} from "@material-ui/core/styles"
-import { Redirect } from "react-router-dom"
+import { Grid } from "@material-ui/core"
+import { withStyles } from "@material-ui/core/styles"
 import {connect} from "react-redux"
 import { login } from "../store/actions/user";
+import { Alert } from "@material-ui/lab"
+
+const styles = (theme) => ({
+    root : {
+        display: "grid",    // to make the alerts at the bottom
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%", 
+    },
+    container: {
+        marginTop: "2rem",
+        width: "100%",
+        height: "80%",
+        border: "3px solid #000a12",
+        borderRadius: "10px",
+
+        [theme.breakpoints.down("sm")]: {
+            height: "19rem",
+            width: "23rem",
+        },
+        [theme.breakpoints.up("md")]: {
+            height: "18rem",
+            width: "35rem",
+        },
+        [theme.breakpoints.up("lg")]: {
+            height: "18rem",
+            width: "40rem",
+        },
+
+    },
+    gridItem : {
+        height: "25%",
+        width: "100%",
+        // display: "grid",
+        // placeItems: "center",
+        padding: "0px 10px"
+    },
+    loginText: {
+        height: "100%",
+        display: "flex",
+        alignItems: "center"
+    },
+    textfield: {
+        width: "100%",
+        height: "100%",
+    },
+    submit: {
+        height: "80%",
+        width: "100%",
+        border: "3px solid #000a12"
+        // marginBottom: "20px"
+    }
+    
+})
 
 class LogIn extends React.Component {
     constructor(props){
         super(props)
         this.state = {
             username: "",
-            password: ""
+            password: "",
+            errors: {
+
+            }
         }
 
         this.classes = this.useStyles
@@ -22,18 +78,42 @@ class LogIn extends React.Component {
         this.handleChange = this.handleChange.bind(this)
     }
     
-    useStyles = makeStyles( theme => ({
-        form: {
-          marginTop: theme.spacing(1)
-        },
-        submit: {
-          marginTop: theme.spacing(2)
-        },
-      }))
-    
-    handleSubmit = (e) => {
+    handleError(errorName, force=false){
+        // flips the errorName true/false
+
+        if (Object.keys(this.props.errors).length > 0 || force){
+            // console.log(this.props.errors)
+            // console.log("THERE'S NO STORY WITH CURRENT ID.")
+            this.setState({
+                ...this.state,
+                errors: {
+                    [ errorName ]: true
+                } 
+            })
+        }
+        // the else resets the stuff to null
+        else {
+            this.setState({
+                ...this.state,
+                errors: {
+                } 
+            })
+        }
+    }
+
+    handleSubmit = async (e) => {
         e.preventDefault()
-        this.props.login(this.state)
+        if (this.state.username && this.state.password){
+            await this.props.login(this.state)
+            this.handleError("wrongCreds")
+
+            // redirect if no errors
+            if (Object.keys(this.state.errors).length === 0){
+                this.props.history.replace({
+                    pathname: '/dashboard',
+                })
+            }
+        }
         
     }
 
@@ -42,62 +122,73 @@ class LogIn extends React.Component {
     }
 
     render() {
+        const classes = this.props.classes
         return (
-            <Container maxWidth="xs">
-                { this.props.user.token && <Redirect to="/dashboard" /> }
-                <Box border={1} borderRadius={5} p={2}>
-                    <Typography component="h1" variant="h5">
-                    Log In
-                    </Typography>
-                    <form 
-                        className={this.classes.form}
-                        method="POST"
-                        onSubmit={this.handleSubmit}
-                    >
-                    <TextField 
-                        variant="outlined"
-                        margin="normal"
-                        required
-                        fullWidth
-                        label="Username"
-                        name="username"
-                        autoFocus
-                        onChange={this.handleChange}
-                    />
-                    <TextField 
-                        variant="outlined"
-                        margin="normal"
-                        required
-                        fullWidth
-                        type="password"
-                        label="Password"
-                        name="password"
-                        onChange={this.handleChange}
-                    />
-                    <Button
-                        variant="outlined"
-                        margin="normal"
-                        type="submit"
-                        fullWidth
-                        className={this.classes.submit}
-                        onClick={this.handleSumbit}
-                    >
-                        Log In
-                    </Button>
-                    </form> 
-                </Box>
+            <Container className={classes.root}>
+                <Grid container className={classes.container}>
+                    <Grid item xs={12} className={classes.gridItem}>
+                        <Typography component="h1" variant="h5" className={classes.loginText}>
+                            Log In
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={12} className={classes.gridItem}>
+                        <TextField 
+                            variant="outlined"
+                            className={classes.textfield}
+                            required
+                            label="Username"
+                            name="username"
+                            autoFocus
+                            onChange={this.handleChange}
+                        />
+                    </Grid>
+                    <Grid item xs={12} className={classes.gridItem}>
+                        <TextField 
+                            variant="outlined"
+                            className={classes.textfield}
+                            required
+                            type="password"
+                            label="Password"
+                            name="password"
+                            onChange={this.handleChange}
+                        />
+                    </Grid>
+                    <Grid item xs={12} className={classes.gridItem}>
+                        <Button
+                            variant="outlined"
+                            className={classes.submit}
+                            type="submit"
+                            onClick={this.handleSubmit}
+                            
+                        >
+                            Log In
+                        </Button>
+                    </Grid>
+                </Grid>
                 
+                    {/* ALERTS */}
+
+                    { this.state.errors.wrongCreds && 
+                            <Alert severity="error">
+                                Wrong Credentials
+                            </Alert> 
+                    }
             </Container>
+
         );
     }
 }
 
 const mapStateToProps = state => ({
-    user: state.user
+    user: state.user,
+    errors: state.api.errors
 })
 
 const mapDispatchToProps = dispatch => ({
-    login: (cred) => {dispatch(login(cred))}
+    login: async (cred) => {await dispatch(login(cred))}
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(LogIn)
+export default connect(mapStateToProps, mapDispatchToProps)(
+    withStyles(styles)(LogIn)
+    
+)

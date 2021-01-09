@@ -18,6 +18,22 @@ class StorySerializer(serializers.ModelSerializer):
     downvotes = serializers.SerializerMethodField("get_downvotes")
     username = serializers.SerializerMethodField("get_username")
     user_vote = serializers.SerializerMethodField("get_user_vote")
+    n = serializers.SerializerMethodField("get_n")
+
+
+    def get_n(self, story):
+        # get the rank from parent's ordered dict
+        if not story.parent:
+            return 0
+        
+        children = models.Story.to_obj(story.parent.children_values)
+        
+        # there's a bug that i don't understand here so i just try catched it
+        try:
+            n = list(children.keys()).index(str(story.id))
+            return n
+        except:
+            return None
 
     def get_user_vote(self, story):
         if self.context:
@@ -41,7 +57,7 @@ class StorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Story
-        fields = ["id", "title", "content", "parent", "user", "upvotes", "downvotes", "username", "user_vote"]
+        fields = ["id", "title", "content", "parent", "user", "children_values", "upvotes", "downvotes", "username", "user_vote", "n"]
 
 class VoteSerializer(serializers.ModelSerializer):
     # TODO: fix the clusterfuck of a model i built here ==> ( id, user, story, value )
