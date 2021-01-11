@@ -38,12 +38,13 @@ class StorySerializer(serializers.ModelSerializer):
     def get_user_vote(self, story):
         if self.context:
             user = self.context.get("user")
-            for vote in user.vote_set.all():
-                if story == vote.upvoted_story:
-                    return 1
-                elif story == vote.downvoted_story:
-                    return -1
-            return 0
+            if user.is_authenticated:
+                for vote in user.vote_set.all():
+                    if story == vote.upvoted_story:
+                        return 1
+                    elif story == vote.downvoted_story:
+                        return -1
+                return 0
         return None
 
     def get_username(self, story):

@@ -1,7 +1,7 @@
 import './App.css';
 import React from "react"
 import { connect } from 'react-redux';
-import {BrowserRouter as Router, Route, Switch} from "react-router-dom"
+import {BrowserRouter as Router, Redirect, Route, Switch} from "react-router-dom"
 import Navbar from "./components/navbar"
 import Login from "./components/login"
 import Register from "./components/register"
@@ -29,16 +29,21 @@ class App extends React.Component {
           <Route path="/signup" component={Register}/>
           <Route path="/logout" component={Logout}/>
           <AuthRoute path="/story/create" component={StoryCreator} />
-          <AuthRoute path="/story" component={StoryBrowser} />
-          <AuthRoute path="/dashboard" component={ Dashboard }/>
-          <AuthRoute exact path="/" component={Dashboard} />
+          <Route path="/story" component={StoryBrowser} />
+          <Route path="/dashboard" component={ Dashboard }/>
+          <Route exact path="/" component={Dashboard} />
         </Switch>
+        {Object.keys(this.props.errors).length > 0 && this.props.errors.status === 401 &&
+          <Redirect to="/login" />
+        }
+        
       </Router>
     );
   }
 }
 
 const mapStateToProps = (state) => ({
+  errors: state.api.errors
 })
 
 const mapDispatchToProps = (dispatch) => ({

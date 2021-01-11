@@ -29,13 +29,21 @@ class Navbar extends React.Component{
                     <Grid container spacing={1}>
 
                         <Grid item xs={8} xm={8} xl={10}>
-                            <Typography variant="h4">Home</Typography>
+                            <Typography 
+                                variant="h4"
+                                component={Link} 
+                                to="/" 
+                                color="inherit" 
+                                style={{
+                                    textDecoration: "none"
+                                }}
+                            >Home</Typography>
                         </Grid>
                         <Grid item xs={2} xm={2} xl={1}>
                             <Button component={ Link } to="/login" color="default" variant="outlined" fullWidth className={classes.button}>Login</Button>
                         </Grid>
                         <Grid item xs={2} xm={2} xl={1}>
-                            <Button component={ Link } to="/signup" color="default" variant="outlined" fullWidth className={classes.button}> Signup</Button>
+                            <Button component={ Link } to="/signup" color="default" variant="outlined" fullWidth className={classes.button}> Register </Button>
                         </Grid>
                     </Grid>
                 </Toolbar>

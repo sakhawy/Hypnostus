@@ -4,18 +4,19 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken import views
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from story.api import serializers
 from story import models
 
 @api_view(["GET", "POST", "PUT", "DELETE"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def get_root_stories_view(request):
     if request.method == "GET":
         data = request.GET
         if not data.get("id", 0):
             all_stories = models.Story.objects.filter(parent=None)
-            serializer = serializers.StorySerializer(all_stories, many=True, context={"user": request.user})
+            context = {"user": request.user}
+            serializer = serializers.StorySerializer(all_stories, many=True, context=context)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             try:
@@ -81,7 +82,7 @@ def get_nth_best_branch(request):
         }, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def get_parent(request):
     data = request.GET
     try:
@@ -102,7 +103,7 @@ def get_parent(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticatedOrReadOnly])
 def get_nth_child(request):
     data = request.GET
     try:
