@@ -39,11 +39,9 @@ class StorySerializer(serializers.ModelSerializer):
         if self.context:
             user = self.context.get("user")
             if user.is_authenticated:
-                for vote in user.vote_set.all():
-                    if story == vote.upvoted_story:
-                        return 1
-                    elif story == vote.downvoted_story:
-                        return -1
+                for vote in user.votes.all():
+                    if story == vote.entity:
+                        return vote.value
                 return 0
         return None
 
@@ -51,19 +49,34 @@ class StorySerializer(serializers.ModelSerializer):
         return story.user.username
 
     def get_upvotes(self, story):
-        return len(story.upvotes.all())
+        return len(list(
+            filter(
+                lambda vote: vote.value == 1,   # get upvotes
+                story.votes.all()
+            )
+        ))
 
     def get_downvotes(self, story):
-        return len(story.downvotes.all())
+        return len(list(
+            filter(
+                lambda vote: vote.value == -1,  # get downvotes
+                story.votes.all()
+            )
+        ))
 
     class Meta:
         model = models.Story
         fields = ["id", "title", "content", "parent", "user", "children_values", "upvotes", "downvotes", "username", "user_vote", "n"]
 
 class VoteSerializer(serializers.ModelSerializer):
-    # TODO: fix the clusterfuck of a model i built here ==> ( id, user, story, value )
     class Meta:
         model = models.Vote
-        fields = ["id", "user", "upvoted_story", "downvoted_story"]
+        fields = ["id", "user", "entity", "value"]
 
-    # TODO: override is_valid to catch the cloned votes errors
+    def create(self, validated_data):
+        "Create new vote or change the value of an existing one."
+        user = validated_data["user"]
+        entity = validated_data["entity"]
+        value = validated_data["value"]
+        vote, created = models.Vote.change_or_create(user=user, entity=entity, value=value)
+        return vote

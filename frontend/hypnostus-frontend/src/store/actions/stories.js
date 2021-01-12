@@ -31,7 +31,7 @@ export const vote = (data) => async (dispatch, getState) => {
         method: "POST",
         endpoint: "story/vote/",
         data: {
-            id: data.storyId,
+            entity: data.storyId,
             value: data.value
         }
     }) (dispatch, getState)

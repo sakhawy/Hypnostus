@@ -11,6 +11,31 @@ class User(AbstractUser):
     def __repr__(self):
         return self.username
 
+
+class Profile(MPTTModel):
+    """
+    This class will contain all the personalized stuff, starting from the feed of the user to the name.
+    - The feed will probably be like : all the followings' top stories in the past day or something + the site's top's
+    
+    - This model will be one to one with the User model and MPTT with itself
+    
+    - It will also display the activities -> upvotes/comments/stories
+    """
+    pass
+
+
+class Comment(MPTTModel):
+    """
+    Approaches :
+        - link every instance to the root story
+        - link the root to the story
+    - It will have a relation to Vote
+    - Filteration by -> date/upvotes/date&upvotes 
+    
+    """
+    pass
+
+
 class Story(MPTTModel):
     """
     So, the value will look something like this 
@@ -93,7 +118,7 @@ class Story(MPTTModel):
         It assigns the value of the node's upvotes plus its maximum children values to its parent.
         And does the same with the node's parent, and so on till root.
         """
-        value = len(story.upvotes.all()) - len(story.downvotes.all()) + Story.get_max_children_values(story.children_values)
+        value = sum([vote.value for vote in story.votes])   # upvotes(1) + downvotes(-1)
 
         ancestors = story.get_ancestors(ascending=True)
         story.value = value
@@ -104,8 +129,7 @@ class Story(MPTTModel):
 
             # update the child_story and value to be of the parent -for the next parent-
             child_story = anc_story
-            value = len(child_story.upvotes.all()) - len(child_story.downvotes.all()) + Story.get_max_children_values(child_story.children_values)
-
+            value = sum([vote.value for vote in child_story.votes])
             # save the new value to the parent
             anc_story.value = value
 
@@ -121,7 +145,7 @@ class Story(MPTTModel):
             parent.children_values = Story.added_value(parent.children_values, story.id, 0) # add child to parent's children_values field
             parent.save()
 
-    title = models.CharField(max_length=500, blank=True, null=True)
+    title = models.CharField(max_length=500)
     content = models.TextField()
     parent = TreeForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name="children")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -155,87 +179,35 @@ class Story(MPTTModel):
         super().delete(*args, **kwargs)
 
 class Vote(models.Model):
-    # NOTE: i donno wtf i was on but this model should've been smn like:
-    # user => foriegnkey(user), story => foriegnkey(story), value => intchoice([1, 0, -1])
-    # i need to take a break from ketamine
     @staticmethod
-    def get_if_exist(user, story):
-        "Get the vote instance if it exist in the user's vote set"
-        for vote in user.vote_set.all():
-            # find an occupied vote
-            if vote.upvoted_story == story or vote.downvoted_story == story:
-                return vote
-        
-        for vote in user.vote_set.all():
-            # find a none vote if no occupied   (this leaves no vote untaken)
-            if vote.upvoted_story == vote.downvoted_story:
-                return vote
-        
-        return None
-
-    @staticmethod
-    def upvote(vote, story):
-        vote.downvoted_story = None
-        vote.upvoted_story = story
-        vote.save()
-        # update
-        Story.vote(story)
-
-    @staticmethod
-    def downvote(vote, story):
-        vote.upvoted_story = None
-        vote.downvoted_story = story
-        vote.save()
-        Story.vote(story)
-    
-    @staticmethod
-    def unvote(vote, story):
-        vote.upvoted_story = None
-        vote.downvoted_story = None
-        vote.save()
-        Story.vote(story)
-
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    upvoted_story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name="upvotes", blank=True, null=True)
-    downvoted_story = models.ForeignKey(Story, on_delete=models.CASCADE, related_name="downvotes", blank=True, null=True)
-
-    def save(self, *args, **kwargs):        
-        # add exception handling for cloned stories bruh. (to ensure using upvote, downvote and unvote functions)
-        # can't save with upvoted_story & downvoted_story filled
-        if self.upvoted_story and self.downvoted_story:
-            raise Exception("Vote Already Exists (upvoted/downvoted)") 
-
-        for vote in self.user.vote_set.all():
-            if vote.id != self.id:  # save is called to update too, so check if the stories are different first
-                # can't save if upvoted_story is in user's votes
-                if self.upvoted_story == vote.upvoted_story and (self.upvoted_story != None):
-                    raise Exception("Vote Already Exists: Can't upvote because user alreay upvoted this story")
-                if self.upvoted_story == vote.downvoted_story and (self.upvoted_story != None):
-                    raise Exception("Vote Already Exists: Can't upvote because user alreay downvoted this story")
-                
-                # cant save if downvoted_stroy is in user's votes      
-                if self.downvoted_story == vote.upvoted_story and (self.downvoted_story != None):
-                    raise Exception("Vote Already Exists: Can't downvote because user alreay upvoted this story")
-                if self.downvoted_story == vote.downvoted_story and (self.downvoted_story != None):
-                    raise Exception("Vote Already Exists: Can't downvote because user alreay downvoted this story")
+    def change_or_create(user, entity, value):
+        "Create new vote or change the value of an existing one."
+        # get
+        for vote in user.votes.all():
+            if vote.entity == entity:
+                # remove duplicates
+                if vote.value == value:
+                    vote.delete()
+                # change value
+                else:
+                    vote.value = value
+                    vote.save()
+                return vote, False
             
-                # prevent user from creating new empty votes
-                if self.upvoted_story == vote.upvoted_story and self.downvoted_story == vote.downvoted_story:   # the only case for this is None, None
-                    raise Exception("Can't Create New Empty Votes: This user already has an unoccupied vote to be used.")
+        #create
+        else:
+            vote = Vote(user=user, entity=entity, value=value)
+            vote.save()
+            return vote, True
 
-        super().save(*args, **kwargs)
 
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="votes")
+    entity = models.ForeignKey(Story, on_delete=models.CASCADE, related_name="votes")
+    value = models.IntegerField()
+
+                    
     def __str__(self):
-        if self.upvoted_story:
-            return f"#{self.id} For {self.upvoted_story.title}"
-        elif self.downvoted_story:
-            return f"#{self.id} For {self.downvoted_story.title}"
-        else:
-            return f"#{self.id}"
+        return f"{self.entity}: {self.value}"
+
     def __repr__(self):
-        if self.upvoted_story:
-            return f"#{self.id} For {self.upvoted_story.title}"
-        elif self.downvoted_story:
-            return f"#{self.id} For {self.downvoted_story.title}"
-        else:
-            return f"#{self.id}"
+        return f"{self.entity}: {self.value}"

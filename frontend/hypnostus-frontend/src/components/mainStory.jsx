@@ -96,18 +96,10 @@ class MainStory extends React.Component{
         // so the vote here has a bug, when you upvote the ui doesn't update cause the state.stories.mainStories doesn't.
         // a cute fix would be to redirect the use to the story's browser page. 
         const story = this.props.stories[this.props.id]
-        if (value !== story.user_vote){
-            this.props.vote({
-                storyId: story.id,
-                value: value
-            })
-        } else {
-            // unvote
-            this.props.vote({
-                storyId: story.id,
-                value: 0
-            })
-        }
+        this.props.vote({
+            storyId: story.id,
+            value: value
+        })
 
         // fix
         this.props.history.push({

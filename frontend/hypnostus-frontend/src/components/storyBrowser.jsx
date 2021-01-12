@@ -213,18 +213,10 @@ class StoryBrowser extends React.Component{
 
     handleVote(value){
         // didn't click twice
-        if (value !== this.props.story.user_vote){
-            this.props.vote({
-                storyId: this.props.story.id,
-                value: value
-            })
-        } else {
-            // unvote
-            this.props.vote({
-                storyId: this.props.story.id,
-                value: 0
-            })
-        }
+        this.props.vote({
+            storyId: this.props.story.id,
+            value: value
+        })
     }
 
     handleCreate(){
