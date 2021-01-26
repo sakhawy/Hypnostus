@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from story import models 
+from itertools import chain
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -68,15 +69,58 @@ class StorySerializer(serializers.ModelSerializer):
         model = models.Story
         fields = ["id", "title", "content", "parent", "user", "children_values", "upvotes", "downvotes", "username", "user_vote", "n"]
 
+
 class VoteSerializer(serializers.ModelSerializer):
+    # FIXME: (LATER) I SPENT LIKE 1 FUCKING HOUR ON THIS LITTLE SHIT
+    # the problem was with the entity field
+ 
+    entity = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = models.Vote
         fields = ["id", "user", "entity", "value"]
 
     def create(self, validated_data):
         "Create new vote or change the value of an existing one."
+        entity_types_dict = {
+            'story': {
+                'model': models.Story, 
+                # 'serializer': serializers.StorySerializer
+            },
+            'comment': {
+                "model":models.Comment,
+                # "serializer": serializers.CommentSerializer
+            }}
+        entity_model = entity_types_dict[self.context["entity_type"]]["model"]
+        try:
+            entity = entity_model.objects.get(id=self.context["entity"])
+        except:
+            return False
+
         user = validated_data["user"]
-        entity = validated_data["entity"]
+
         value = validated_data["value"]
         vote, created = models.Vote.change_or_create(user=user, entity=entity, value=value)
         return vote
+
+class CommentSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField("get_username")
+    user_vote = serializers.SerializerMethodField("get_user_vote")
+
+    def get_username(self, comment):
+        return comment.user.username
+    
+    def get_user_vote(self, story):
+        if self.context:
+            user = self.context.get("user")
+            if user.is_authenticated:
+                for vote in user.votes.all():
+                    if story == vote.entity:
+                        return vote.value
+                return 0
+        # the context is defined in the get, when not provided the user is the creator 
+        return 0    # will be zero since it was just created
+
+    class Meta:
+        model = models.Comment
+        fields = ["id", "story", "content", "user", "parent", "value", "username", "user_vote"]

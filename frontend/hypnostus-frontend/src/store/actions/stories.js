@@ -26,11 +26,13 @@ export const load_stories = () => async (dispatch, getState) => {
 
 
 export const vote = (data) => async (dispatch, getState) => {
+    console.log("STORY VOTING")
     // call api 
     const response = await callApi({
         method: "POST",
-        endpoint: "story/vote/",
+        endpoint: "vote/",
         data: {
+            entity_type: "story",
             entity: data.storyId,
             value: data.value
         }
@@ -38,7 +40,10 @@ export const vote = (data) => async (dispatch, getState) => {
     // dispatch  
     if (response) {
         // reload branch [ease of calculations]
-        dispatch(load_active_story(data.storyId))
+        dispatch({
+            type: STORY_UPDATED,
+            payload: response
+        })
     }
 }
 

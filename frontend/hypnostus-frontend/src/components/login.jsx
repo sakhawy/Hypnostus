@@ -11,7 +11,8 @@ import { Alert } from "@material-ui/lab"
 
 const styles = (theme) => ({
     root : {
-        display: "grid",    // to make the alerts at the bottom
+        display: "flex",    
+        flexWrap: 'wrap', // to make the alerts at the bottom
         alignItems: "center",
         justifyContent: "center",
         height: "100%", 
@@ -58,6 +59,9 @@ const styles = (theme) => ({
         width: "100%",
         border: "3px solid #000a12"
         // marginBottom: "20px"
+    },
+    alert : {
+        width: "100%"
     }
     
 })
@@ -113,6 +117,8 @@ class LogIn extends React.Component {
                     pathname: '/dashboard',
                 })
             }
+        } else {
+            this.handleError("noCreds", true)
         }
         
     }
@@ -165,12 +171,16 @@ class LogIn extends React.Component {
                         </Button>
                     </Grid>
                 </Grid>
-                
                     {/* ALERTS */}
 
                     { this.state.errors.wrongCreds && 
-                            <Alert severity="error">
+                            <Alert severity="error" className={classes.alert}>
                                 Wrong Credentials
+                            </Alert> 
+                    }
+                    { this.state.errors.noCreds && 
+                            <Alert severity="error" className={classes.alert}>
+                                Please fill in all the fields.
                             </Alert> 
                     }
             </Container>

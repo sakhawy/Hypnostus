@@ -1,6 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericRelation  
+from django.contrib.contenttypes.models import ContentType
 from mptt.models import MPTTModel, TreeForeignKey
 import json
 
@@ -23,17 +26,44 @@ class Profile(MPTTModel):
     """
     pass
 
+class Vote(models.Model):
+    @staticmethod
+    def change_or_create(user, entity, value):
+        "Create new vote or change the value of an existing one."
+        # get
+        for vote in user.votes.all():
+            if vote.entity == entity:
+                # remove duplicates
+                if vote.value == value:
+                    vote.delete()
+                # change value
+                else:
+                    vote.value = value
+                    vote.save()
+            
+                entity.vote()  # call vote to change values
+                return vote, False
+            
+        #create
+        else:
+            vote = Vote(user=user, entity=entity, value=value)
+            vote.save()
+            entity.vote()  # call vote to change values
+            return vote, True
 
-class Comment(MPTTModel):
-    """
-    Approaches :
-        - link every instance to the root story
-        - link the root to the story
-    - It will have a relation to Vote
-    - Filteration by -> date/upvotes/date&upvotes 
-    
-    """
-    pass
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="votes")
+    entity = GenericForeignKey("content_type", "object_id")
+    value = models.IntegerField()
+
+                    
+    def __str__(self):
+        return f"{self.entity}: {self.value}"
+
+    def __repr__(self):
+        return f"{self.entity}: {self.value}"
 
 
 class Story(MPTTModel):
@@ -111,29 +141,28 @@ class Story(MPTTModel):
         sorted_dict = dict(sorted(data.items(), key=lambda item: item[1], reverse=True)) # sort the items ==> dict_items((key, value)) by the value ==> item[1] 
         return json.dumps(sorted_dict)  # python3.6+'s dict is sorted by insertion
     
-    @staticmethod
-    def vote(story):
+    def vote(self):
         """
         This function updates the values of a node and its ancestors.
         It assigns the value of the node's upvotes plus its maximum children values to its parent.
         And does the same with the node's parent, and so on till root.
         """
-        value = sum([vote.value for vote in story.votes])   # upvotes(1) + downvotes(-1)
+        value = sum([vote.value for vote in self.votes.all()])   # upvotes(1) + downvotes(-1)
 
-        ancestors = story.get_ancestors(ascending=True)
-        story.value = value
-        child_story = story
+        ancestors = self.get_ancestors(ascending=True)
+        self.value = value
+        child_story = self
         for anc_story in ancestors:
             # change the value of the child_story in parent
             anc_story.children_values = Story.added_value(anc_story.children_values, str(child_story.id), value)
 
             # update the child_story and value to be of the parent -for the next parent-
             child_story = anc_story
-            value = sum([vote.value for vote in child_story.votes])
+            value = sum([vote.value for vote in child_story.votes.all()])
             # save the new value to the parent
             anc_story.value = value
 
-        Story.objects.bulk_update(list(ancestors)+[story], ['children_values', 'value'])
+        Story.objects.bulk_update(list(ancestors)+[self], ['children_values', 'value'])
 
 
     @staticmethod
@@ -151,6 +180,8 @@ class Story(MPTTModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     children_values = models.JSONField(blank=True, null=True)
     value = models.IntegerField(blank=True, null=True)
+
+    votes = GenericRelation(Vote)   # reverse relation for vote contenttype
 
     def __str__(self):
         return f"{self.title} #{self.id}"
@@ -178,36 +209,24 @@ class Story(MPTTModel):
             parent.save()
         super().delete(*args, **kwargs)
 
-class Vote(models.Model):
-    @staticmethod
-    def change_or_create(user, entity, value):
-        "Create new vote or change the value of an existing one."
-        # get
-        for vote in user.votes.all():
-            if vote.entity == entity:
-                # remove duplicates
-                if vote.value == value:
-                    vote.delete()
-                # change value
-                else:
-                    vote.value = value
-                    vote.save()
-                return vote, False
-            
-        #create
-        else:
-            vote = Vote(user=user, entity=entity, value=value)
-            vote.save()
-            return vote, True
+class Comment(MPTTModel):
+    story = models.ForeignKey(Story, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    content = models.TextField()
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name="children")
+    value = models.IntegerField(default=0)
 
+    votes = GenericRelation(Vote)   # reverse relation for vote contenttype
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="votes")
-    entity = models.ForeignKey(Story, on_delete=models.CASCADE, related_name="votes")
-    value = models.IntegerField()
+    def vote(self):
+        "Update the value."
+        print(f"INVOKED {self.value} {len(self.votes.all())}")
+        print(Vote.objects.all())
+        self.value = sum([vote.value for vote in self.votes.all()])
+        self.save()
 
-                    
     def __str__(self):
-        return f"{self.entity}: {self.value}"
+        return f"Comment #{self.id} for {self.story}"
 
     def __repr__(self):
-        return f"{self.entity}: {self.value}"
+        return f"Comment #{self.id} for {self.story}"

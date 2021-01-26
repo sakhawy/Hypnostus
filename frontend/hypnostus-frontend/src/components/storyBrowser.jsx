@@ -14,12 +14,17 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Alert } from '@material-ui/lab'
 import { load_active_story, load_next_active_story, load_prev_active_story } from "../store/actions/stories"
 import { vote } from "../store/actions/stories"
+import { loadComments } from "../store/actions/comments"
+import CommentContainer from "./commentContainer"
+
 const styles = (theme) => ({
     root : {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        height: "100%", // the navbar
+        height: "100%", 
+        flexWrap: 'wrap', 
+
     },
     // child: {
         
@@ -207,8 +212,14 @@ class StoryBrowser extends React.Component{
 
     async componentDidMount (){
         this.path = queryString.parse(this.props.location.search)
+        // load story
         await this.props.loadCurrent(this.path.id)
         this.handleError("noStory")
+        // load its comments
+        // FIXME: there was a bug that fucked with me for a little, it was a side effect of the
+        // state.stories.activeStory, comments of cached activeStory will appear on new loaded active story
+        // this is a way to fix it: to load it after awaiting the activeStory to load. but it think it's not clean.
+        await this.props.loadRootComments({story: this.props.story.id})
     }
 
     handleVote(value){
@@ -462,6 +473,13 @@ class StoryBrowser extends React.Component{
                         </Alert> 
                     }
 
+                {/* RENDER WHEN ACTIVESTORY IS SET */}
+                { Object.keys(this.props.story).length > 0 &&
+                    <div style={{height: "40%"}}>
+
+                        <CommentContainer />
+                    </div>
+                }
                 </Container>
                 </Box>
 )
@@ -480,6 +498,9 @@ const mapDispatchToProps = dispatch => ({
 
     loadNext: (data) => dispatch(load_next_active_story(data)),
     loadPrev: (id) => dispatch(load_prev_active_story(id)),
+
+    loadRootComments: (data) => {dispatch(loadComments(data)) },
+
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(

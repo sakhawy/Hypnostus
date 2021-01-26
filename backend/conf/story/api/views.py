@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from story.api import serializers
 from story import models
 
+# TODO: add a thing to check for all the needed data with every api call
+
 @api_view(["GET", "POST", "PUT", "DELETE"])
 @permission_classes([IsAuthenticatedOrReadOnly])
 def get_root_stories_view(request):
@@ -122,30 +124,102 @@ def get_nth_child(request):
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def vote_story(request):
+def vote_entity(request):
     if request.method == "GET":
         votes = models.Vote.objects.filter(user=request.user)
         res_data = {}
         for vote in votes:
-            res_date[vote.entity.id] = vote.value
+            res_data[vote.entity.id] = vote.value
         
         return Response(res_data, status=status.HTTP_200_OK)
 
 
     if request.method == 'POST':
-        try:
-            story = models.Story.objects.get(id=request.data["entity"])
-        except:
-            return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+        # the way ive come up with to detect the entity :
+        # request : {entity_typt: ???, entity_id: ???}
+        
+        # FIXME: THIS IS SO FUCKING BAD. FIX ENTITY FIELD SERIALIZER OR TRY ANOTHER METHOD TO GENERALIZE VOTE.
 
         # create vote
         data = request.data.copy()
+        data.update({"user": request.user.id})    
+        serializer = serializers.VoteSerializer(data=data, context=data)
+        if serializer.is_valid():
+            serializer.save()
+
+            if data["entity_type"] == "story":
+                story = models.Story.objects.get(id=data["entity"])
+                entity_serializer = serializers.StorySerializer(story, context={"user": request.user}) 
+
+            elif data["entity_type"] == "comment":
+                story = models.Comment.objects.get(id=data["entity"])
+                
+                # this is kinda bad that i have to add the context here, if you wanna fix it, change the way you get user vote
+                entity_serializer = serializers.CommentSerializer(story, context={"user": request.user})    
+
+            return Response(entity_serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "POST", "PUT", "DELETE"])
+@permission_classes([IsAuthenticatedOrReadOnly])
+def comment_view(request):
+    if request.method == "GET":
+        data = request.GET
+        try:
+            story = models.Story.objects.get(id=data["story"])
+        except:
+            return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST) 
+        
+        comments = models.Comment.objects.filter(
+            story_id=data["story"], 
+            parent=data.get("parent", None)     # this will get the root stories if no parent and children if parent
+        )
+
+        # user context for user_vote 
+        serializer = serializers.CommentSerializer(comments, many=True, context={"user": request.user}) 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == "POST":
+        data = request.data.copy()
         data.update({"user": request.user.id})
-        serializer = serializers.VoteSerializer(data=data)
+        serializer = serializers.CommentSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == "PUT":
+        # THIS METHOD SUCKS CAUSE I HAVE TO RE-CREATE THE THING AGAIN
+        try:
+            comment = models.Comment.objects.get(id=request.data["id"])
+            if not comment.user == request.user:
+                return Response({"error": "Un-Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        except:
+            return Response({"error": "Comment Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data.copy()
+        data.update({"user": request.user.id})
+        serializer = serializers.CommentSerializer(comment, data=data, context={"user": request.user})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == "DELETE":
+        print(request.data)
+        try:
+            comment = models.Comment.objects.get(id=request.data["id"])
+            if not comment.user == request.user:
+                return Response({"error": "Un-Authorized"}, status=status.HTTP_401_UNAUTHORIZED)
+        except:
+            return Response({"error": "Comment Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST) 
+
+        serializer_data = serializers.CommentSerializer(comment).data
+        
+        comment.delete()
+        return Response(serializer_data, status=status.HTTP_200_OK)
 
 @api_view(["POST"])
 def user_login_view(request):

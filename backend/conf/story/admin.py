@@ -10,6 +10,10 @@ class StoryAdmin(admin.ModelAdmin):
 class VoteAdmin(admin.ModelAdmin):
     list_display = ["__str__"]
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ["__str__"]
+
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Story, StoryAdmin)
 admin.site.register(models.Vote, VoteAdmin)
+admin.site.register(models.Comment, CommentAdmin)

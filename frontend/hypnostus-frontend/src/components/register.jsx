@@ -12,7 +12,8 @@ import { Alert } from "@material-ui/lab"
 
 const styles = (theme) => ({
     root : {
-        display: "grid",
+        display: "flex",
+        flexWrap: 'wrap',   // alerts at the bottom
         alignItems: "center",
         justifyContent: "center",
         height: "100%", // the navbar
@@ -59,6 +60,9 @@ const styles = (theme) => ({
         border: "3px solid #000a12"
 
         // marginBottom: "20px"
+    },
+    alert : {
+        width: "100%"
     }
     
 })
@@ -179,13 +183,13 @@ class Register extends React.Component {
                 {/* ALERTS */}
 
                 { this.state.errors.usernameUsed && 
-                    <Alert severity="error">
+                    <Alert severity="error" className={classes.alert}>
                         Userame is taken
                     </Alert> 
                 }
 
                 { this.state.errors.badCreds && 
-                    <Alert severity="error">
+                    <Alert severity="error" className={classes.alert}>
                         Bad credentials. Please fill all the fields <i>correctly</i>.
                     </Alert> 
                 }

@@ -28,7 +28,7 @@ class Navbar extends React.Component{
                 >
                     <Grid container spacing={1}>
 
-                        <Grid item xs={8} xm={8} xl={10}>
+                        <Grid item xs={4} md={8} xl={10}>
                             <Typography 
                                 variant="h4"
                                 component={Link} 
@@ -39,10 +39,10 @@ class Navbar extends React.Component{
                                 }}
                             >Home</Typography>
                         </Grid>
-                        <Grid item xs={2} xm={2} xl={1}>
+                        <Grid item xs={4} md={2} xl={1}>
                             <Button component={ Link } to="/login" color="default" variant="outlined" fullWidth className={classes.button}>Login</Button>
                         </Grid>
-                        <Grid item xs={2} xm={2} xl={1}>
+                        <Grid item xs={4} md={2} xl={1}>
                             <Button component={ Link } to="/signup" color="default" variant="outlined" fullWidth className={classes.button}> Register </Button>
                         </Grid>
                     </Grid>
@@ -53,7 +53,7 @@ class Navbar extends React.Component{
 
                 >
                     <Grid container spacing={1}>
-                        <Grid item xs={10} xm={10} xl={11}>
+                        <Grid item xs={8} md={10} xl={11}>
                             <Typography 
                                 component={Link} 
                                 to="/dashboard" 
@@ -66,7 +66,7 @@ class Navbar extends React.Component{
                                 Dashboard
                             </Typography>
                         </Grid>
-                        <Grid item xs={2} xm={2} xl={1}>
+                        <Grid item xs={4} md={2} xl={1}>
                             <Button component={ Link } to="/logout" color="default" variant="outlined" fullWidth className={classes.button}> Logout </Button>
                         </Grid>
                     </Grid>
