@@ -9,16 +9,13 @@ export const ROOT_COMMENT_UPDATED = "ROOT_COMMENT_UPDATED"
 export const ROOT_COMMENT_DELETED = "ROOT_COMMENT_DELETED"
 export const BRANCH_COMMENT_DELETED = "BRANCH_COMMENT_DELETED"
 
-export const loadComments = (data) => async (dispatch, getState) => {
+export const load_comments = (data) => async (dispatch, getState) => {
     console.log(data)
     // call api 
     const response = await callApi({
         method: "GET",
         endpoint: "story/comment/",
-        params: {
-            story: data.story,
-            parent: data.parent
-        }
+        params: data
     }) (dispatch, getState)
     // dispatch  
     if (response) {

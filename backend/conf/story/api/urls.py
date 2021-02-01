@@ -8,6 +8,8 @@ urlpatterns = [
     path('story/branch/', views.get_nth_best_branch),
     path('story/next/', views.get_nth_child),
     path('story/prev/', views.get_parent),
+    path('story/comment/', views.comment_view),
     path('vote/', views.vote_entity),
-    path('story/comment/', views.comment_view)
+    path('profile/', views.profile_view),
+    path('follow/', views.follow)
 ]

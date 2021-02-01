@@ -9,6 +9,7 @@ import {withStyles} from "@material-ui/core/styles"
 import {connect} from "react-redux"
 import { register } from "../store/actions/user";
 import { Alert } from "@material-ui/lab"
+import { get_profile } from "../store/actions/profile";
 
 const styles = (theme) => ({
     root : {
@@ -110,6 +111,14 @@ class Register extends React.Component {
             await this.props.register(this.state)
             this.handleError("usernameUsed")
             
+            // get the profile 
+            // TODO: handle error
+            if (this.props.user.username){
+                await this.props.getProfile({
+                  username: this.props.user.username
+                })
+            }
+
             // redirect if no errors
             if (Object.keys(this.state.errors).length === 0){
                 this.props.history.replace({
@@ -205,7 +214,8 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => ({
-    register: async (cred) => {await dispatch(register(cred))}
+    register: async (cred) => {await dispatch(register(cred))},
+    getProfile: (data) => dispatch(get_profile(data, true))
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(

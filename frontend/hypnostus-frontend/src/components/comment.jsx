@@ -5,7 +5,7 @@ import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
-import { delete_comment, loadComments } from "../store/actions/comments"
+import { delete_comment, load_comments } from "../store/actions/comments"
 import {vote} from "../store/actions/comments"
 const styles = (theme) => ({
     root : {
@@ -235,7 +235,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     vote: (data) => {dispatch(vote(data))},
-    loadCommentBranch: (data) => {dispatch(loadComments(data))},
+    loadCommentBranch: (data) => {dispatch(load_comments(data))},
     delete: (data) => dispatch(delete_comment(data))
 })
 

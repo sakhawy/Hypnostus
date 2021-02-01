@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { Button, Container, withStyles } from "@material-ui/core"
 import CommentIcon from '@material-ui/icons/Comment';
 import ChatBubbleIcon from '@material-ui/icons/ChatBubble';
-import { loadComments, vote, create_comment, edit_comment } from "../store/actions/comments"
+import { load_comments, vote, create_comment, edit_comment } from "../store/actions/comments"
 import Comment from "./comment"
 import CommentCreator from "./commentCreator.jsx"
 
@@ -220,7 +220,7 @@ const mapStateToProps = state => ({
 })
 
 const mapDispatchToProps = dispatch => ({
-    loadRootComments: (data) => {dispatch(loadComments(data)) },
+    loadRootComments: (data) => {dispatch(load_comments(data)) },
     createComment: (data) => dispatch(create_comment(data)),
     editComment: (data) => dispatch(edit_comment(data))
 

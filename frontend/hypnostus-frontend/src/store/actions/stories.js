@@ -6,11 +6,12 @@ export const STORY_UPDATED = "STORY_UPDATED";
 export const STORY_DELETED = "STORY_DELETED";
 export const ACTIVE_STORY_LOADED = "ACTIVE_STORY_LOADED"
 
-export const load_stories = () => async (dispatch, getState) => {
+export const load_stories = (data) => async (dispatch, getState) => {
     // call api 
     const response = await callApi({
         method:"GET",
         endpoint: "story/",
+        params: data
     })(dispatch, getState)
     // dispatch  
     if (response) {

@@ -4,10 +4,12 @@ import stories_reducer from "./reducers/stories"
 import user_reducer from "./reducers/user"
 import api_reducer from "./reducers/api"
 import comments_reducer from "./reducers/comments"
+import profile_reducer from "./reducers/profile"
 
 const reducers = combineReducers({
-    stories: stories_reducer,
     user: user_reducer,
+    profiles: profile_reducer,
+    stories: stories_reducer,
     api: api_reducer,
     comments: comments_reducer
 })

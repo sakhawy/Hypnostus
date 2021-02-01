@@ -5,8 +5,13 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken import views
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from datetime import datetime, timedelta 
 from story.api import serializers
 from story import models
+
+# HOLYSHIT THE CODE IS A MESS
+# I sould've put all of the stories into one view and depending on the 
+# data or params I change functionality
 
 # TODO: add a thing to check for all the needed data with every api call
 
@@ -15,8 +20,35 @@ from story import models
 def get_root_stories_view(request):
     if request.method == "GET":
         data = request.GET
+
+        if data.get("username", 0):
+            try:
+                user = models.User.objects.get(username=data["username"])
+            except:
+                return Response({'error': 'User Doesn\'t Exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+            past_week = datetime.now() - timedelta(days=7)
+            all_user_stories = sorted (
+                # get all main from past week
+                models.Story.objects.filter(user=user).filter(created__gte=past_week),    
+                key=lambda x: x.value,
+                reverse=True
+            )    # sort by votes 
+
+            context = {"user": request.user}
+            serializer = serializers.StorySerializer(all_user_stories, many=True, context=context)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
         if not data.get("id", 0):
-            all_stories = models.Story.objects.filter(parent=None)
+
+            past_week = datetime.now() - timedelta(days=7)
+            all_stories = sorted (
+                # get all main from past week
+                models.Story.objects.filter(parent=None).filter(created__gte=past_week),    
+                key=lambda x: x.value,
+                reverse=True
+            )    # sort by votes 
+
             context = {"user": request.user}
             serializer = serializers.StorySerializer(all_stories, many=True, context=context)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -166,19 +198,33 @@ def vote_entity(request):
 def comment_view(request):
     if request.method == "GET":
         data = request.GET
-        try:
-            story = models.Story.objects.get(id=data["story"])
-        except:
-            return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST) 
-        
-        comments = models.Comment.objects.filter(
-            story_id=data["story"], 
-            parent=data.get("parent", None)     # this will get the root stories if no parent and children if parent
-        )
 
-        # user context for user_vote 
-        serializer = serializers.CommentSerializer(comments, many=True, context={"user": request.user}) 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if data.get("username", 0):
+            # filter comments with username
+            try:
+                user = models.User.objects.get(username=data["username"])
+            except:
+                return Response({'error': 'User Doesn\'t Exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+            comments = models.Comment.objects.filter(user=user)
+            comments_serializer = serializers.CommentSerializer(comments, many=True)
+            return Response(comments_serializer.data, status=status.HTTP_200_OK)
+
+        if data.get("story", 0):
+            # filter comments with story
+            try:
+                story = models.Story.objects.get(id=data["story"])
+            except:
+                return Response({"error": "Story Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST) 
+            
+            comments = models.Comment.objects.filter(
+                story_id=data["story"], 
+                parent=data.get("parent", None)     # this will get the root stories if no parent and children if parent
+            )
+
+            # user context for user_vote 
+            serializer = serializers.CommentSerializer(comments, many=True, context={"user": request.user}) 
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == "POST":
         data = request.data.copy()
@@ -232,18 +278,82 @@ def user_login_view(request):
     valid_password = check_password(request.data["password"], unauth_user.password)
     if valid_password:
         token, created = Token.objects.get_or_create(user=unauth_user)
-        return Response({'token': token.key}, status=status.HTTP_200_OK)  # if the user registered outside api, create token
+
+        user_serializer = serializers.UserSerializer(unauth_user)
+        data = {'token': token.key}
+        data.update(user_serializer.data)
+        return Response(data, status=status.HTTP_200_OK)  # if the user registered outside api, create token
     return Response({"error": "Bad Credintials."}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(["POST"])
 def user_registration_view(request):
+    # TODO: auto-create the token when creating the profile
+    # TODO: the profile also must be created automatically
     try:
-        serializer = serializers.UserSerializer(data=request.data)
+        user_serializer = serializers.UserSerializer(data=request.data)
     except:
         return Response({'error': 'Username Already Exists'}, status=status.HTTP_400_BAD_REQUEST)
-        
-    if serializer.is_valid():
-        user = serializer.save()
+
+    if user_serializer.is_valid():
+        user = user_serializer.save()
         token = Token.objects.create(user=user)
-        return Response({'token': token.key}, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        profile_serializer = serializers.ProfileSerializer(data={"user": user.id})
+        if profile_serializer.is_valid():
+            profile_serializer.save()
+            print("saved")
+            print(models.Profile.objects.all())
+            data = {'token': token.key}
+            data.update(user_serializer.data)
+            return Response(data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticatedOrReadOnly])
+def profile_view(request):
+    # TODO: add some privacy options and permissions on certain profile fields 
+    if request.method == "GET":
+        data = request.GET
+        print(data)
+        # get the profile
+        try:
+            profile = models.Profile.objects.get(user=models.User.objects.get(username=data["username"]))
+        except:
+            return Response({"error": "Profile Doesn't Exist"}, status=status.HTTP_400_BAD_REQUEST)
+
+        requesting_profile = models.Profile.objects.get(user=request.user)
+        profile_serializer = serializers.ProfileSerializer(profile, context={"profile": requesting_profile})
+        return Response(profile_serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == "PUT":
+        # edit the profile
+        pass
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def follow(request):
+    # this function returns the follower and the followed
+     
+    # POST request
+
+    data = request.data
+    print(data)
+    try:
+        following_user = models.User.objects.get(username=data["username"])
+        following = models.Profile.objects.get(user=following_user)
+    except:
+        return Response({'error': 'User Doesn\'t Exists'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    follower = models.Profile.objects.get(user=request.user)
+
+    # create/delete the follow [1 or 0]
+    models.Follow.follow(profile=follower, following=following)
+    
+    # return profile, following
+    follower_serializer = serializers.ProfileSerializer(follower, context={"profile": follower})    # context for the requesting profile
+    following_serializer = serializers.ProfileSerializer(following, context={"profile": follower})
+
+    return Response({"follower": follower_serializer.data, "following": following_serializer.data}, status=status.HTTP_200_OK)
+

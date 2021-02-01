@@ -14,8 +14,9 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { Alert } from '@material-ui/lab'
 import { load_active_story, load_next_active_story, load_prev_active_story } from "../store/actions/stories"
 import { vote } from "../store/actions/stories"
-import { loadComments } from "../store/actions/comments"
+import { load_comments } from "../store/actions/comments"
 import CommentContainer from "./commentContainer"
+import { Link } from "react-router-dom"
 
 const styles = (theme) => ({
     root : {
@@ -249,6 +250,8 @@ class StoryBrowser extends React.Component{
 
         // update url params
         this.path.id = this.props.story.id
+        // load comments 
+        await this.props.loadRootComments({story: this.props.story.id})
         window.history.replaceState(null, "", `${this.props.location.pathname}?${queryString.stringify(this.path)}`)
     }
 
@@ -259,8 +262,11 @@ class StoryBrowser extends React.Component{
 
         // update url params 
         this.path.id = this.props.story.id
+        // load comments 
+        await this.props.loadRootComments({story: this.props.story.id})
         window.history.replaceState(null, "", `${this.props.location.pathname}?${queryString.stringify(this.path)}`)
-        }
+
+    }
 
     async handleAlternate(val){
         const res = parseInt(this.props.story.n) + val
@@ -270,7 +276,10 @@ class StoryBrowser extends React.Component{
             this.handleError("noAltDown")
                 
             this.path.n = this.props.story.n
+            // load comments 
+            await this.props.loadRootComments({story: this.props.story.id})
             window.history.replaceState(null, "", `${this.props.location.pathname}?${queryString.stringify(this.path)}`)
+
         }
         else {
             this.handleError("noAltUp", true)
@@ -281,12 +290,6 @@ class StoryBrowser extends React.Component{
         const classes = this.props.classes
         return (
             <Box className={classes.root}>
-
-
-                
-
-
-
                 <Container
                     className={classes.container}
                     >
@@ -380,7 +383,9 @@ class StoryBrowser extends React.Component{
                                     <Typography
                                         noWrap
                                     >
-                                        {this.props.story.username}
+                                        <Link
+                                            to={`/profile/${this.props.story.username}`}
+                                        >{this.props.story.username}</Link>
                                     </Typography>
                                 </Grid>
                             </Grid>
@@ -499,7 +504,7 @@ const mapDispatchToProps = dispatch => ({
     loadNext: (data) => dispatch(load_next_active_story(data)),
     loadPrev: (id) => dispatch(load_prev_active_story(id)),
 
-    loadRootComments: (data) => {dispatch(loadComments(data)) },
+    loadRootComments: (data) => {dispatch(load_comments(data)) },
 
 })
 

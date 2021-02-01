@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.fields import GenericRelation  
 from django.contrib.contenttypes.models import ContentType
+from django.utils.timezone import now
 from mptt.models import MPTTModel, TreeForeignKey
 import json
 
@@ -14,17 +15,52 @@ class User(AbstractUser):
     def __repr__(self):
         return self.username
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    created = models.DateTimeField(blank=True, null=True)
 
-class Profile(MPTTModel):
-    """
-    This class will contain all the personalized stuff, starting from the feed of the user to the name.
-    - The feed will probably be like : all the followings' top stories in the past day or something + the site's top's
+    def __str__(self):
+        return self.user.username
+
+    def __repr__(self):
+        return self.user.username
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created = now()
+        super().save(*args, **kwargs)
+
+class Follow(models.Model):
+    # TODO: user can't follow self.
+    # TODO: follows are unique
+
+    @staticmethod
+    def follow(profile, following):
+        # since we're blind, we'll search for a follow, if it exist, delete it, otherwise, create a new one.
+        for follower in following.followers.all():
+            if follower.profile == profile:
+                # delete follow
+                follower.delete()
+                return False
+        Follow.objects.create(profile=profile, following=following)
+        return True
     
-    - This model will be one to one with the User model and MPTT with itself
-    
-    - It will also display the activities -> upvotes/comments/stories
-    """
-    pass
+    "Like the Vote model, this will link a source with a destination."
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    following = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="followers")
+    created = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.profile} > {self.following}"
+
+    def __repr__(self):
+        return f"{self.profile} > {self.following}"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created = now()
+        super().save(*args, **kwargs)
+
 
 class Vote(models.Model):
     @staticmethod
@@ -58,12 +94,18 @@ class Vote(models.Model):
     entity = GenericForeignKey("content_type", "object_id")
     value = models.IntegerField()
 
+    created = models.DateTimeField(blank=True, null=True)
                     
     def __str__(self):
         return f"{self.entity}: {self.value}"
 
     def __repr__(self):
         return f"{self.entity}: {self.value}"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created = now()
+        super().save(*args, **kwargs)
 
 
 class Story(MPTTModel):
@@ -179,9 +221,11 @@ class Story(MPTTModel):
     parent = TreeForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name="children")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     children_values = models.JSONField(blank=True, null=True)
-    value = models.IntegerField(blank=True, null=True)
+    value = models.IntegerField()
 
     votes = GenericRelation(Vote)   # reverse relation for vote contenttype
+
+    created = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.title} #{self.id}"
@@ -193,6 +237,8 @@ class Story(MPTTModel):
         # ok, this took me some time
         # i've overridden save many times but this one is different since i need an id first
         if not self.id:
+            self.created = now()
+
             super().save(*args, **kwargs) 
             Story.default_value(self)
         else:
@@ -218,6 +264,8 @@ class Comment(MPTTModel):
 
     votes = GenericRelation(Vote)   # reverse relation for vote contenttype
 
+    created = models.DateTimeField(blank=True, null=True)
+
     def vote(self):
         "Update the value."
         print(f"INVOKED {self.value} {len(self.votes.all())}")
@@ -230,3 +278,8 @@ class Comment(MPTTModel):
 
     def __repr__(self):
         return f"Comment #{self.id} for {self.story}"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.created = now()
+        super().save(*args, **kwargs)
