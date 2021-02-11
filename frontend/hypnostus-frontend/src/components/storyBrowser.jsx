@@ -220,7 +220,7 @@ class StoryBrowser extends React.Component{
         // FIXME: there was a bug that fucked with me for a little, it was a side effect of the
         // state.stories.activeStory, comments of cached activeStory will appear on new loaded active story
         // this is a way to fix it: to load it after awaiting the activeStory to load. but it think it's not clean.
-        await this.props.loadRootComments({story: this.props.story.id})
+        await this.props.loadComments({story: this.props.story.id})
     }
 
     handleVote(value){
@@ -251,7 +251,7 @@ class StoryBrowser extends React.Component{
         // update url params
         this.path.id = this.props.story.id
         // load comments 
-        await this.props.loadRootComments({story: this.props.story.id})
+        await this.props.loadComments({story: this.props.story.id})
         window.history.replaceState(null, "", `${this.props.location.pathname}?${queryString.stringify(this.path)}`)
     }
 
@@ -263,7 +263,7 @@ class StoryBrowser extends React.Component{
         // update url params 
         this.path.id = this.props.story.id
         // load comments 
-        await this.props.loadRootComments({story: this.props.story.id})
+        await this.props.loadComments({story: this.props.story.id})
         window.history.replaceState(null, "", `${this.props.location.pathname}?${queryString.stringify(this.path)}`)
 
     }
@@ -277,7 +277,7 @@ class StoryBrowser extends React.Component{
                 
             this.path.n = this.props.story.n
             // load comments 
-            await this.props.loadRootComments({story: this.props.story.id})
+            await this.props.loadComments({story: this.props.story.id})
             window.history.replaceState(null, "", `${this.props.location.pathname}?${queryString.stringify(this.path)}`)
 
         }
@@ -504,7 +504,7 @@ const mapDispatchToProps = dispatch => ({
     loadNext: (data) => dispatch(load_next_active_story(data)),
     loadPrev: (id) => dispatch(load_prev_active_story(id)),
 
-    loadRootComments: (data) => {dispatch(load_comments(data)) },
+    loadComments: (data) => {dispatch(load_comments(data, true))},
 
 })
 

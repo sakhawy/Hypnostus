@@ -6,7 +6,6 @@ import ChatBubbleIcon from '@material-ui/icons/ChatBubble';
 import { load_comments, vote, create_comment, edit_comment } from "../store/actions/comments"
 import Comment from "./comment"
 import CommentCreator from "./commentCreator.jsx"
-
 const styles = (theme) => ({
     root : {
         height: "100%",
@@ -61,7 +60,6 @@ class CommentContainer extends React.Component {
 
     componentDidMount(){
         // console.log(this.props.activeStory)
-        console.log(this.state)
     }
 
     handleCreateComment(id){
@@ -130,8 +128,8 @@ class CommentContainer extends React.Component {
         const classes = this.props.classes
         return (
             <div className={classes.root}>
-                {this.props.rootComments &&
-                    this.props.rootComments.map(comment => {
+                {this.props.comments &&
+                    this.props.comments.filter(comment => comment.parent === null).map(comment => {
                         return (
                             <div style={{position: "relative"}}>
                                 {!this.state.toggleEdit[comment.id] 
@@ -145,7 +143,7 @@ class CommentContainer extends React.Component {
                                     />
                                 }
                                 
-                                {this.props.branchComments[comment.id] && this.props.branchComments[comment.id].map(comment => {
+                                {this.props.comments && this.props.comments.filter(subComment => subComment.parent === comment.id).map(comment => {
                                     return (
                                         <Container>
                                             {!this.state.toggleEdit[comment.id] 
@@ -213,14 +211,13 @@ class CommentContainer extends React.Component {
 }
 
 const mapStateToProps = state => ({
-    rootComments: state.comments.root,
-    branchComments: state.comments.branches,
+    comments: state.comments,
     activeStory: state.stories.activeStory
 
 })
 
 const mapDispatchToProps = dispatch => ({
-    loadRootComments: (data) => {dispatch(load_comments(data)) },
+    loadComments: (data) => {dispatch(load_comments(data)) },
     createComment: (data) => dispatch(create_comment(data)),
     editComment: (data) => dispatch(edit_comment(data))
 

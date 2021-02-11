@@ -221,7 +221,7 @@ class Story(MPTTModel):
     parent = TreeForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name="children")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     children_values = models.JSONField(blank=True, null=True)
-    value = models.IntegerField()
+    value = models.IntegerField(default=0)
 
     votes = GenericRelation(Vote)   # reverse relation for vote contenttype
 

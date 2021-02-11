@@ -85,7 +85,7 @@ class Comment extends React.Component {
     constructor(props){
         super(props)
         this.handleVote = this.handleVote.bind(this)
-        this.handleLoadCommentBranch = this.handleLoadCommentBranch.bind(this)
+        this.handleAddComments = this.handleAddComments.bind(this)
         this.handleDelete = this.handleDelete.bind(this)
     }
 
@@ -99,9 +99,8 @@ class Comment extends React.Component {
         })
     }
 
-    handleLoadCommentBranch(){
-        this.props.loadCommentBranch({
-            story: this.props.activeStory.id,
+    handleAddComments(){
+        this.props.addComments({
             parent: this.props.comment.id 
         })
     }
@@ -216,7 +215,7 @@ class Comment extends React.Component {
                     >
                         <Button
                             className={` ${classes.responsiveButton} ${classes.expandButton} `}
-                            onClick={this.handleLoadCommentBranch}
+                            onClick={this.handleAddComments}
                         >
                             <ExpandMoreIcon /> Load replies
                         </Button>
@@ -235,7 +234,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     vote: (data) => {dispatch(vote(data))},
-    loadCommentBranch: (data) => {dispatch(load_comments(data))},
+    addComments: (data) => {dispatch(load_comments(data))},
     delete: (data) => dispatch(delete_comment(data))
 })
 

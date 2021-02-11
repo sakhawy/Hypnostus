@@ -1,15 +1,11 @@
 import { callApi } from "./api";
 
-export const ROOT_COMMENTS_LOADED = "COMMENTS_LOADED"
-export const BRANCH_COMMENTS_LOADED = "BRANCH_COMMENTS_LOADED"
-export const ROOT_COMMENT_ADDED = "ROOT_COMMENT_ADDED"
-export const BRANCH_COMMENT_ADDED = "BRANCH_COMMENT_ADDED"
-export const BRANCH_COMMENT_UPDATED = "BRANCH_COMMENT_UPDATED"
-export const ROOT_COMMENT_UPDATED = "ROOT_COMMENT_UPDATED"
-export const ROOT_COMMENT_DELETED = "ROOT_COMMENT_DELETED"
-export const BRANCH_COMMENT_DELETED = "BRANCH_COMMENT_DELETED"
+export const COMMENTS_LOADED = "COMMENTS_LOADED"
+export const COMMENTS_ADDED = "COMMENTS_ADDED"
+export const COMMENTS_DELETED = "COMMENTS_DELETED"
+export const COMMENTS_UPDATED = "COMMENTS_UPDATED"
 
-export const load_comments = (data) => async (dispatch, getState) => {
+export const load_comments = (data, new_load=false) => async (dispatch, getState) => {
     console.log(data)
     // call api 
     const response = await callApi({
@@ -19,22 +15,15 @@ export const load_comments = (data) => async (dispatch, getState) => {
     }) (dispatch, getState)
     // dispatch  
     if (response) {
-        // reload branch [ease of calculations]
-        const action = data.parent ? BRANCH_COMMENTS_LOADED : ROOT_COMMENTS_LOADED   
-        if (!data.parent){
+        if (new_load){
             dispatch({
-                type: action,
+                type: COMMENTS_LOADED,
                 payload: response
             })
         } else {
-            // the branch state is only deleted when the root comments gets reloaded so it
-            // needs to know who's the parent to keep on adding 
             dispatch({
-                type: action,
-                payload: {
-                    id: data.parent,
-                    data: response
-                }
+                type: COMMENTS_ADDED,
+                payload: response
             })
         }
     }
@@ -52,22 +41,11 @@ export const create_comment = (data) => async (dispatch, getState) => {
             parent: data.parent
         }
     }) (dispatch, getState)
-    // dispatch  
     if (response) {
-        // load all the comments again 
-        // FIXME: BAD
-        if (!response.parent){
-            dispatch({
-                type: ROOT_COMMENT_ADDED,
-                payload: response
-            })
-        }
-        else {
-            dispatch({
-                type: BRANCH_COMMENT_ADDED,
-                payload: response
-            })
-        }
+        dispatch({
+            type: COMMENTS_ADDED,
+            payload: [ response ]
+        })
     }
 }
 
@@ -83,10 +61,9 @@ export const edit_comment = (data) => async (dispatch, getState) => {
         }
     }) (dispatch, getState)
     // dispatch  
-    const action = response.parent ? BRANCH_COMMENT_UPDATED : ROOT_COMMENT_UPDATED   
     if (response) {
         dispatch({
-            type: action,
+            type: COMMENTS_UPDATED,
             payload: response
 
         })
@@ -102,11 +79,9 @@ export const delete_comment = (data) => async (dispatch, getState) => {
             id: data.id
         }
     }) (dispatch, getState)
-    // dispatch  
-    const action = response.parent ? BRANCH_COMMENT_DELETED : ROOT_COMMENT_DELETED   
     if (response) {
         dispatch({
-            type: action,
+            type: COMMENTS_DELETED,
             payload: response
 
         })
@@ -127,16 +102,9 @@ export const vote = (data) => async (dispatch, getState) => {
     // dispatch  
     if (response) {
         // reload branch [ease of calculations]
-        if (data.parent){
-            dispatch({
-                type: BRANCH_COMMENT_UPDATED,
-                payload: response
-            })
-        } else {
-            dispatch({
-                type: ROOT_COMMENT_UPDATED,
-                payload: response
-            })
-        }
+        dispatch({
+            type: COMMENTS_UPDATED,
+            payload: response
+        })
     }
 }

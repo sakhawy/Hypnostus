@@ -208,7 +208,7 @@ def comment_view(request):
 
             comments = models.Comment.objects.filter(user=user)
             comments_serializer = serializers.CommentSerializer(comments, many=True)
-            return Response(comments_serializer.data, status=status.HTTP_200_OK)
+            return Response([comment for comment in comments_serializer.data], status=status.HTTP_200_OK)
 
         if data.get("story", 0):
             # filter comments with story
@@ -219,12 +219,24 @@ def comment_view(request):
             
             comments = models.Comment.objects.filter(
                 story_id=data["story"], 
-                parent=data.get("parent", None)     # this will get the root stories if no parent and children if parent
+                parent=None     # this will get the root stories if no parent and children if parent
             )
 
             # user context for user_vote 
             serializer = serializers.CommentSerializer(comments, many=True, context={"user": request.user}) 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response([comment for comment in serializer.data], status=status.HTTP_200_OK)
+
+        if data.get("parent", 0):
+            try:
+                parent_comment = models.Comment.objects.get(id=data["parent"])
+            except:
+                return Response({'error': "Comment Doesn't Exist"})
+            
+            sub_comments = models.Comment.objects.filter(parent=parent_comment)
+            sub_comments_serializer = serializers.CommentSerializer(sub_comments, many=True, context={"user": request.user})
+
+            return Response([comment for comment in sub_comments_serializer.data], status=status.HTTP_200_OK)
+            
 
     elif request.method == "POST":
         data = request.data.copy()
